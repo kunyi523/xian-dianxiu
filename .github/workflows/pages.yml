@@ -20,10 +20,13 @@ jobs:
           mkdir -p _site/assets _site/sprites
           cp dist/index.html dist/404.html _site/
           python3 <<'PY'
-          import base64, pathlib
+          import base64, pathlib, shutil
+
           assets = pathlib.Path('dist/assets')
           out = pathlib.Path('_site/assets')
           out.mkdir(parents=True, exist_ok=True)
+
+          # Assemble from .parts + .b64 chunks, or copy already-decoded files
           for parts_file in assets.glob('*.parts'):
               name = parts_file.name[:-6]
               chunks = parts_file.read_text().split()
@@ -36,8 +39,12 @@ jobs:
               if p.is_file():
                   (out / p.name).write_bytes(p.read_bytes())
                   print('asset copied', p.name)
+
           src = pathlib.Path('sprites-b64')
           dst = pathlib.Path('_site/sprites')
+          dst.mkdir(parents=True, exist_ok=True)
+
+          # Prefer decoding chunked sprites-b64
           for parts_file in src.glob('*.parts'):
               name = parts_file.name[:-6]
               chunks = parts_file.read_text().split()
@@ -53,11 +60,20 @@ jobs:
                   continue
               (dst / stem).write_bytes(base64.b64decode(p.read_text()))
               print('decoded', stem)
+
+          # Also copy dist/sprites/ raw if present (fills gaps; decoded wins above)
+          raw = pathlib.Path('dist/sprites')
+          if raw.is_dir():
+              for p in raw.iterdir():
+                  if p.is_file() and not (dst / p.name).exists():
+                      shutil.copy2(p, dst / p.name)
+                      print('sprite copied raw', p.name)
+
           print('site ready')
           PY
           test -f _site/sprites/xian-mountain.jpg
           test -f _site/sprites/xian-mountain-ruin.jpg
-          test -n "$(ls _site/assets/index-*.js 2>/dev/null | head -1)"
+          test -n "$(ls _site/assets/index-*.js 2>/dev/null)"
           ls -la _site/sprites | head
           ls -la _site/assets
       - uses: actions/upload-pages-artifact@v3
