@@ -55,9 +55,11 @@ jobs:
               print('decoded', stem)
           print('site ready')
           PY
+          test -f _site/sprites/xian-mountain.jpg
           test -f _site/sprites/xian-mountain-ruin.jpg
-          test -f _site/assets/index-CJRgpPZK.js
+          test -n "$(ls _site/assets/index-*.js 2>/dev/null | head -1)"
           ls -la _site/sprites | head
+          ls -la _site/assets
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
