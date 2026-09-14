@@ -1,0 +1,72 @@
+name: Deploy GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode sprites and assemble site
+        run: |
+          mkdir -p _site/assets _site/sprites
+          cp dist/index.html dist/404.html _site/
+          python3 <<'PY'
+          import base64, pathlib
+          assets = pathlib.Path('dist/assets')
+          out = pathlib.Path('_site/assets')
+          out.mkdir(parents=True, exist_ok=True)
+          for parts_file in assets.glob('*.parts'):
+              name = parts_file.name[:-6]
+              chunks = parts_file.read_text().split()
+              b64 = ''.join((assets / c).read_text() for c in chunks)
+              (out / name).write_bytes(base64.b64decode(b64))
+              print('asset joined', name)
+          for p in assets.glob('*'):
+              if p.suffix == '.parts' or p.name.endswith('.b64'):
+                  continue
+              if p.is_file():
+                  (out / p.name).write_bytes(p.read_bytes())
+                  print('asset copied', p.name)
+          src = pathlib.Path('sprites-b64')
+          dst = pathlib.Path('_site/sprites')
+          for parts_file in src.glob('*.parts'):
+              name = parts_file.name[:-6]
+              chunks = parts_file.read_text().split()
+              b64 = ''.join((src / c).read_text() for c in chunks)
+              (dst / name).write_bytes(base64.b64decode(b64))
+              print('joined', name, 'from', len(chunks), 'parts')
+          for p in sorted(src.glob('*.b64')):
+              stem = p.name[:-4]
+              last = stem.split('.')[-1]
+              if last.isdigit() and stem.count('.') >= 2:
+                  continue
+              if (src / f'{stem}.parts').exists():
+                  continue
+              (dst / stem).write_bytes(base64.b64decode(p.read_text()))
+              print('decoded', stem)
+          print('site ready')
+          PY
+          test -f _site/sprites/xian-mountain-ruin.jpg
+          test -f _site/assets/index-CJRgpPZK.js
+          ls -la _site/sprites | head
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
