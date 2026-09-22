@@ -29,6 +29,7 @@ import {
   stampStates,
   tribCenter,
   type Blit,
+  setFxAssetBase,
 } from "./ink";
 import { juice, type JuiceEvent } from "./juice";
 import { formatNum, totalDps } from "./sim";
@@ -39,6 +40,8 @@ const assetUrl = (p: string) => `${ASSET_BASE}${p.replace(/^\//, "")}`;
 
 // 建筑分级贴图基址:{base}/{id}_t{n}.png,public/sprites 映射
 setInkAssetBase(assetUrl("sprites"));
+// 特效逐帧基址:{base}/{kind}_f{n}.png,public/fx 映射
+setFxAssetBase(assetUrl("fx"));
 
 // 帧间缓存:建筑表静态不变,band 分组与 id→index 只算一次,避免每帧 filter/sort/findIndex
 const BAND_CACHE = [buildingsInBand(0), buildingsInBand(1), buildingsInBand(2)] as const;

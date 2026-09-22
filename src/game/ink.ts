@@ -50,6 +50,31 @@ export function buildingImg(id: string, tier: number): HTMLImageElement | null {
   return img.complete && img.naturalWidth > 0 ? img : null;
 }
 
+/* ---------- 特效 PNG(逐帧 {kind}_f{n})资源 ---------- */
+let fxAssetBase = "/";
+export function setFxAssetBase(b: string) {
+  fxAssetBase = b.replace(/\/$/, "");
+}
+const fxImgCache = new Map<string, HTMLImageElement>();
+const fxImgMissing = new Set<string>();
+/** 取特效逐帧贴图,只拼 {kind}_f{n}.png(jietu_f1..f6 / xianqi_f1..f6)。缺图打日志,不做 fallback。 */
+export function fxImg(kind: "jietu" | "xianqi", frame: number): HTMLImageElement | null {
+  const key = `${kind}_f${frame}`;
+  let img = fxImgCache.get(key);
+  if (!img) {
+    img = new Image();
+    img.src = `${fxAssetBase}/${key}.png`;
+    img.onerror = () => {
+      if (!fxImgMissing.has(key)) {
+        fxImgMissing.add(key);
+        console.warn(`[ink] 特效贴图缺失:${key}.png,不做 fallback`);
+      }
+    };
+    fxImgCache.set(key, img);
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
 /* ---------- 分级 PNG 精灵绘制(统一 footprint) ---------- */
 /**
  * 精灵图统一 1600x1600,建筑脚底在底部 40px 边距处、水平居中。
@@ -64,7 +89,8 @@ function drawSpriteBuilding(
   tier: number,
 ) {
   if (tier < 1) return; // 未解锁不上图
-  const t = Math.min(tier, 3); // 只有 t1-t3;t4 暂用 t3
+  // 只有 t1-t3;t4 暂用 t3。hall 只有 t1/t2,逻辑 tier 2/3/4 显式用 t2,不请求 hall_t3
+  const t = Math.min(tier, id === "hall" ? 2 : 3);
   const img = buildingImg(id, t);
   if (!img) return; // 缺图已打日志,不绘制
   const size = s * 2; // 逻辑格:与槽位宽度对齐,运行时只做统一 scale
@@ -628,7 +654,6 @@ export function drawTribCloud(
   const cxq = Math.round(cx);
   const cyq = Math.round(cy);
   const gk = `${cxq},${cyq},${sq},${pq}`;
-  const blobs: [number, number, number][] = TRIB_BLOBS;
   ctx.save();
   // 外圈淡墨晕（水墨 wash）
   const wash = radialCached(ctx, `wash:${gk}`, cxq, cyq, sq * 0.15, cxq, cyq, sq * 2.4, [
@@ -641,33 +666,25 @@ export function drawTribCloud(
   ctx.ellipse(cx, cy + s * 0.05, s * 2.35, s * 1.15, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  for (const [dx, dy, sc] of blobs) {
-    const wob = 0.06 * Math.sin(t * 0.6 + dx * 2.2);
-    const rx = s * sc * (1.62 + pulse * 0.06 + wob);
-    const ry = s * sc * (0.52 + 0.07 * Math.sin(t * 0.5 + dy));
-    ctx.fillStyle = "rgba(28,25,20,0.09)";
+  // 劫云主体:六帧 PNG(jietu_f1..f6)替代旧矢量墨云,pulse 只调尺寸与透明
+  const fx = fxImg("jietu", Math.floor(t * 6) % 6 + 1);
+  if (fx) {
+    const fs = s * (4.7 + pulse * 0.18); // PNG 全帧即云团,按原洗染范围对齐
+    ctx.globalAlpha = 0.97;
+    ctx.drawImage(fx, cx - fs / 2, cy - fs / 2 + s * 0.05, fs, fs);
+    ctx.globalAlpha = 1;
+  } else {
+    // 缺图已打日志:保底保留一层淡墨核,避免云体完全消失
+    const core = radialCached(ctx, `core:${gk}`, cxq - sq * 0.05, cyq - sq * 0.04, 0, cxq, cyq, sq * 0.55, [
+      [0, `rgba(40,36,32,${0.82 + pq * 0.1})`],
+      [0.55, "rgba(28,25,20,0.55)"],
+      [1, "rgba(28,25,20,0)"],
+    ]);
+    ctx.fillStyle = core;
     ctx.beginPath();
-    ctx.ellipse(cx + dx * s * 1.4, cy + dy * s, rx * 1.2, ry * 1.25, dx * 0.08, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy + s * 0.02, s * 0.52, s * 0.28, -0.06, 0, Math.PI * 2);
     ctx.fill();
   }
-  for (const [dx, dy, sc] of blobs) {
-    const rx = s * sc * (1.1 + pulse * 0.05);
-    const ry = s * sc * (0.36 + 0.05 * Math.sin(t * 0.48 + dy));
-    ctx.fillStyle = `rgba(28,25,20,${0.34 + pulse * 0.1})`;
-    ctx.beginPath();
-    ctx.ellipse(cx + dx * s * 1.28, cy + dy * s * 0.88, rx, ry, dx * 0.07, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // 墨核
-  const core = radialCached(ctx, `core:${gk}`, cxq - sq * 0.05, cyq - sq * 0.04, 0, cxq, cyq, sq * 0.55, [
-    [0, `rgba(40,36,32,${0.82 + pq * 0.1})`],
-    [0.55, "rgba(28,25,20,0.55)"],
-    [1, "rgba(28,25,20,0)"],
-  ]);
-  ctx.fillStyle = core;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + s * 0.02, s * 0.52, s * 0.28, -0.06, 0, Math.PI * 2);
-  ctx.fill();
   // 软朱砂印心（非硬红点）
   const sealR = sq * (0.22 + pq * 0.12);
   const seal = radialCached(
@@ -832,6 +849,24 @@ function drawQiThreads(
   ctx.globalAlpha = 1;
 }
 
+/** 仙气六帧:建筑后方氛围 overlay,慢循环,低透明,不遮建筑。 */
+function drawXianqiBehind(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  s: number,
+  t: number,
+) {
+  const img = fxImg("xianqi", Math.floor(t * 3) % 6 + 1);
+  if (!img) return; // 缺图已打日志,不绘制
+  const size = s * 2.4;
+  ctx.save();
+  ctx.globalAlpha = 0.38;
+  // 建筑中心约在 (x, y-0.9s):脚底锚点 y 上方
+  ctx.drawImage(img, x - size / 2, y - 0.9 * s - size / 2, size, size);
+  ctx.restore();
+}
+
 export function drawSiteFx(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -846,18 +881,10 @@ export function drawSiteFx(
   const s = Math.max(28, scale);
   const breath = 0.5 + 0.5 * Math.sin(t * 1.15 + x * 0.01);
   ctx.save();
-  // 第2层试点:tower 走分级 PNG 精灵;hall t1/t2 未补,暂时不上图(产品缺口,避免 404)
-  if (id === "hall") {
-    ctx.restore();
-    return;
-  }
-  if (id === "tower") {
-    drawSpriteBuilding(ctx, id, x, y, s, tier);
-    ctx.restore();
-    return;
-  }
-  // 第2层铺完:tower 试点通过,6 栋走同一 drawSpriteBuilding;hall 等 t1/t2
-  if (id === "mine" || id === "house" || id === "sword" || id === "array" || id === "mirror" || id === "alchemy") {
+  // 第2层收口:8 栋全部走分级 PNG 精灵;hall 只有 t1/t2,逻辑 tier 2/3/4 显式用 t2
+  if (id) {
+    // 仙气帧:后方氛围 overlay,已解锁站点才有
+    if (tier >= 1) drawXianqiBehind(ctx, x, y, s, t);
     drawSpriteBuilding(ctx, id, x, y, s, tier);
     ctx.restore();
     return;
