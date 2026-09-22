@@ -2,10 +2,10 @@ import { useEffect, useRef } from "react";
 import { BUILDINGS, DISCIPLES } from "./data";
 import {
   BUILDING_SLOTS,
+  backdropBlit,
   buildingsInBand,
-  coverBlit,
   drawBandMist,
-  drawCrane,
+  drawCraneReal,
   drawCultivator,
   drawDistantPeaks,
   drawForeground,
@@ -19,7 +19,6 @@ import {
   drawTribCloud,
   drawUpgradeBurst,
   drawWaterfall,
-  panBlit,
   pathCornerNear,
   pathPoint,
   pathSteepAt,
@@ -111,6 +110,8 @@ export function WorldCanvas() {
       return lastStamps;
     };
     let flash = 0;
+    let boltFlash = 0; // 雷击专属闪白
+    let pendingBolt = false; // 破境时排一道大的
     let vortexPulse = 0;
     let running = true;
     let orbTimer = 18 + Math.random() * 12;
@@ -121,7 +122,7 @@ export function WorldCanvas() {
     let cssW = 390;
     let cssH = 700;
 
-    // 8–10 只墨鹤：更大、更高、更宽航线；轻墨迹不拖 perf
+    // 9 只仙鹤实拍图(public/sprites/crane_real.png),缺图打日志、天空留白
     const cranes = Array.from({ length: 9 }, (_, i) => ({
       x: -0.2 + Math.random() * 1.4,
       y: 0.028 + Math.random() * 0.13,
@@ -137,30 +138,19 @@ export function WorldCanvas() {
       ph: Math.random() * 10,
     }));
 
-    const pickWalkerPath = (preferUpper: boolean) => {
-      const r = Math.random();
-      let idx = 0;
-      if (preferUpper) {
-        if (r < 0.55) idx = 2; // 朝圣上峰
-        else if (r < 0.85) idx = 1; // 山腰折
-        else idx = 0;
-      } else if (r < 0.5) idx = 0; // 山麓环
-      else if (r < 0.85) idx = 1;
-      else idx = 2;
-      return Math.max(0, Math.min(PATH_COUNT - 1, idx));
-    };
-    const makeWalker = (i: number, preferUpper = false): Walker => ({
+    // 每位弟子固定一条山路(i % 3),沿 waypoint 来回行走,不再随机乱走
+    const makeWalker = (i: number): Walker => ({
       s: Math.random(),
-      // 略慢于旧版，陡段再乘 pathSteepAt
+      // 略慢,陡段再乘 pathSteepAt
       sp: (Math.random() * 0.042 + 0.016) * (Math.random() < 0.5 ? 1 : -1) * (0.85 + Math.random() * 0.3),
       v: i % 6,
       bob: Math.random() * 10,
-      path: pickWalkerPath(preferUpper),
+      path: i % PATH_COUNT,
       jitter: 0.4 + Math.random() * 0.85,
       pause: Math.random() * 0.6,
     });
     for (let i = 0; i < 8; i++) {
-      walkers.push(makeWalker(i, false));
+      walkers.push(makeWalker(i));
     }
 
     const spawnParticle = (p: Particle) => {
@@ -181,8 +171,8 @@ export function WorldCanvas() {
 
     const mountain = new Image();
     mountain.crossOrigin = "anonymous";
-    // v8:全新空山底图(无建筑/无废墟/无文字),单图不再做废墟融合
-    mountain.src = assetUrl("sprites/xian-mountain.jpg?v=8");
+    // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
+    mountain.src = assetUrl("bg/bg_qingshan.png");
     let mountainOk = false;
     let blit: Blit | null = null;
     // Offscreen cache: avoid drawImage-ing the ~0.9MB JPG every rAF
@@ -194,8 +184,8 @@ export function WorldCanvas() {
       mountainCacheKey = "";
     };
 
-    let pan = 0;
-    const drag = { on: false, moved: false, x: 0, y: 0, pan0: 0 };
+    // 拖拽只做点按防误触(>12px 不触发点按);世界坐标=屏幕坐标,不再平移背景
+    const drag = { on: false, moved: false, x: 0, y: 0 };
 
     const LANDINGS = [
       { nx: 0.44, ny: 0.62 },
@@ -212,7 +202,7 @@ export function WorldCanvas() {
     const ensureMountainCache = (dw: number, dh: number, dpr: number) => {
       const bw = Math.max(1, Math.round(dw * dpr));
       const bh = Math.max(1, Math.round(dh * dpr));
-      const key = `v8|${bw}x${bh}|m:${mountainOk ? 1 : 0}`;
+      const key = `qg1|${bw}x${bh}|m:${mountainOk ? 1 : 0}`;
       if (mountainCache && mountainCacheKey === key) return mountainCache;
       const hasMtn = mountainOk && mountain.naturalWidth > 0;
       if (!hasMtn) return null;
@@ -229,21 +219,20 @@ export function WorldCanvas() {
       return oc;
     };
 
+    /** 背景只做装饰:fit-width 铺满高屏;世界坐标恒为屏幕坐标,布局不挤。 */
     const syncBlit = (w: number, h: number) => {
       const base = mountainOk && mountain.naturalWidth ? mountain : null;
-      if (!base || !base.naturalWidth) {
-        blit = null;
-        return false;
-      }
-      const raw = coverBlit(base.naturalWidth, base.naturalHeight, w, h);
-      blit = panBlit(raw, pan, w);
+      // 世界坐标 = 屏幕坐标(背景缺失时 slotXY 本来也回退到这一套)
+      blit = { dx: 0, dy: 0, dw: w, dh: h };
+      if (!base || !base.naturalWidth) return false;
+      const bd = backdropBlit(base.naturalWidth, base.naturalHeight, w, h);
       const dpr = canvas.width / Math.max(1, w);
-      const cache = ensureMountainCache(blit.dw, blit.dh, dpr);
+      const cache = ensureMountainCache(bd.dw, bd.dh, dpr);
       if (cache) {
         // Cache is already device-pixel sized; transform scales CSS→device ≈ 1:1
-        ctx.drawImage(cache, blit.dx, blit.dy, blit.dw, blit.dh);
+        ctx.drawImage(cache, bd.dx, bd.dy, bd.dw, bd.dh);
       } else {
-        ctx.drawImage(base, blit.dx, blit.dy, blit.dw, blit.dh);
+        ctx.drawImage(base, bd.dx, bd.dy, bd.dw, bd.dh);
       }
       return true;
     };
@@ -269,7 +258,7 @@ export function WorldCanvas() {
             vy: Math.sin(a) * sp - 8,
             life: 0.32 + Math.random() * 0.22,
             max: 0.55,
-            color: e.crit ? "#a63d32" : "#3a3630",
+            color: e.crit ? "#b13a2c" : "#46545b",
             kind: "mote",
             size: e.crit ? 2.2 : 1.55,
           });
@@ -281,7 +270,7 @@ export function WorldCanvas() {
           vy: 0,
           life: 0.26,
           max: 0.26,
-          color: e.crit ? "#a63d32" : "#1c1914",
+          color: e.crit ? "#b13a2c" : "#2c383e",
           kind: "ring",
           size: e.crit ? 8 : 6,
         });
@@ -296,6 +285,7 @@ export function WorldCanvas() {
       } else if (e.t === "layer") {
         trauma = Math.min(1, trauma + 0.65);
         flash = 0.4;
+        pendingBolt = true; // 破境：劫云降下一道大雷
         pulseVibrate(18);
         vortexPulse = 1;
         const { cx, cy } = tribCenter(cssW, cssH, blit);
@@ -308,7 +298,7 @@ export function WorldCanvas() {
             vy: Math.sin(a) * 28,
             life: 0.7,
             max: 0.7,
-            color: i % 2 ? "#a63d32" : "#1c1914",
+            color: i % 2 ? "#b13a2c" : "#2c383e",
             kind: "mote",
             size: 2,
           });
@@ -335,7 +325,7 @@ export function WorldCanvas() {
                 vy: Math.sin(a) * sp * 0.7 - 18,
                 life: e.tierUp ? 1.1 : 0.75,
                 max: e.tierUp ? 1.1 : 0.75,
-                color: i % 2 ? "#a63d32" : "#f3eee4",
+                color: i % 2 ? "#b13a2c" : "#f2faf6",
                 kind: i % 4 === 0 ? "ring" : "mote",
                 size: e.tierUp ? 3.2 : 2.2,
               });
@@ -368,7 +358,7 @@ export function WorldCanvas() {
             vy: Math.sin(a) * sp - 10,
             life: 0.85 + Math.random() * 0.45,
             max: 1.3,
-            color: i % 3 === 0 ? "#a63d32" : i % 2 ? "#3a3630" : "#5c564c",
+            color: i % 3 === 0 ? "#b13a2c" : i % 2 ? "#46545b" : "#5c7078",
             kind: "mote",
             size: 1.6 + Math.random() * 1.2,
           });
@@ -380,7 +370,7 @@ export function WorldCanvas() {
           vy: 0,
           life: 0.5,
           max: 0.5,
-          color: "#a63d32",
+          color: "#b13a2c",
           kind: "ring",
           size: 6,
         });
@@ -451,7 +441,7 @@ export function WorldCanvas() {
                 vy: Math.sin(a) * sp * 0.55 - 4,
                 life: 0.5 + Math.random() * 0.3,
                 max: 0.85,
-                color: i % 2 ? "#5c564c" : "#3a3630",
+                color: i % 2 ? "#5c7078" : "#46545b",
                 kind: "mote",
                 size: 1.3 + Math.random() * 0.6,
               });
@@ -463,7 +453,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.34,
               max: 0.34,
-              color: "#3a3630",
+              color: "#46545b",
               kind: "ring",
               size: 4,
             });
@@ -485,10 +475,10 @@ export function WorldCanvas() {
                 max: 1.05,
                 color:
                   fxKind === "seal" || fxKind === "dawn"
-                    ? "#a63d32"
+                    ? "#b13a2c"
                     : fxKind === "void"
-                      ? "#1c1914"
-                      : "#3a3630",
+                      ? "#2c383e"
+                      : "#46545b",
                 kind: fxKind === "sword" ? "sword" : i % 5 === 0 ? "ring" : "mote",
                 size: fxKind === "sword" ? 2.5 : fxKind === "seal" ? 4.5 : 2.1,
               });
@@ -501,7 +491,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.62,
               max: 0.62,
-              color: fxKind === "void" ? "#1c1914" : "#a63d32",
+              color: fxKind === "void" ? "#2c383e" : "#b13a2c",
               kind: "ring",
               size: 10,
             });
@@ -513,7 +503,7 @@ export function WorldCanvas() {
                 vy: 0,
                 life: 0.42,
                 max: 0.42,
-                color: "#a63d32",
+                color: "#b13a2c",
                 kind: "ring",
                 size: 6,
               });
@@ -547,14 +537,14 @@ export function WorldCanvas() {
                 max: 1.45,
                 color:
                   fxKind === "dawn"
-                    ? i % 2 ? "#a63d32" : "#5c564c"
+                    ? i % 2 ? "#b13a2c" : "#5c7078"
                     : fxKind === "seal"
-                      ? i % 2 ? "#a63d32" : "#1c1914"
+                      ? i % 2 ? "#b13a2c" : "#2c383e"
                       : fxKind === "void"
-                        ? i % 3 === 0 ? "#f3eee4" : "#1c1914"
+                        ? i % 3 === 0 ? "#f2faf6" : "#2c383e"
                         : fxKind === "sword"
-                          ? i % 2 ? "#3a3630" : "#1c1914"
-                          : "#3a3630",
+                          ? i % 2 ? "#46545b" : "#2c383e"
+                          : "#46545b",
                 kind,
                 size: kind === "sword" ? 3.1 : kind === "ring" ? 6 : 2.4 + Math.random() * 1.4,
               });
@@ -567,7 +557,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.85,
               max: 0.85,
-              color: fxKind === "dawn" || fxKind === "seal" ? "#a63d32" : "#1c1914",
+              color: fxKind === "dawn" || fxKind === "seal" ? "#b13a2c" : "#2c383e",
               kind: "ring",
               size: 14,
             });
@@ -578,7 +568,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.55,
               max: 0.55,
-              color: "#a63d32",
+              color: "#b13a2c",
               kind: "ring",
               size: 7,
             });
@@ -591,7 +581,7 @@ export function WorldCanvas() {
                 vy: 18 + Math.random() * 28,
                 life: 0.7 + Math.random() * 0.4,
                 max: 1.2,
-                color: i % 4 === 0 ? "#a63d32" : "#1c1914",
+                color: i % 4 === 0 ? "#b13a2c" : "#2c383e",
                 kind: "mote",
                 size: 1.2 + Math.random() * 1.8,
               });
@@ -644,14 +634,12 @@ export function WorldCanvas() {
       drag.moved = false;
       drag.x = ev.clientX;
       drag.y = ev.clientY;
-      drag.pan0 = pan;
     };
     const onPointerMove = (ev: PointerEvent) => {
       if (!drag.on) return;
       const dx = ev.clientX - drag.x;
       const dy = ev.clientY - drag.y;
       if (Math.abs(dx) > 12 || Math.abs(dy) > 12) drag.moved = true;
-      if (drag.moved) pan = drag.pan0 + dx;
     };
     const onPointerUp = (ev: PointerEvent) => {
       if (!drag.on) return;
@@ -767,6 +755,7 @@ export function WorldCanvas() {
       time += dt;
       trauma = Math.max(0, trauma - dt * 1.8);
       flash = Math.max(0, flash - dt * 1.6);
+      boltFlash = Math.max(0, boltFlash - dt * 2.4);
       vortexPulse = Math.max(0, vortexPulse - dt * 2.4);
       orbTimer -= dt;
       lightningT -= dt;
@@ -786,19 +775,10 @@ export function WorldCanvas() {
         18,
         3 + Math.floor((st.disciples.length + Object.values(st.buildings).reduce((a, b) => a + (b > 0 ? 1 : 0), 0)) * 0.6),
       );
-      const ownedHigh = st.disciples.some((d) => {
-        const def = DISCIPLES.find((x) => x.id === d.id);
-        return (def?.rarity ?? 0) >= 3;
-      });
       while (walkers.length < targetWalkers) {
-        walkers.push(makeWalker(walkers.length, ownedHigh));
+        walkers.push(makeWalker(walkers.length));
       }
       while (walkers.length > targetWalkers) walkers.pop();
-      // 已有高稀有弟子时，缓慢把部分麓径 walker 迁到上峰
-      if (ownedHigh && Math.random() < dt * 0.35) {
-        const foothill = walkers.find((w) => w.path === 0);
-        if (foothill && Math.random() < 0.55) foothill.path = Math.random() < 0.6 ? 2 : 1;
-      }
 
       const { cx, cy, R } = tribCenter(w, h, blit);
 
@@ -812,27 +792,59 @@ export function WorldCanvas() {
         if (orb.life <= 0) orb = null;
       }
 
-      if (lightningT < 0) {
-        lightningT = 4 + Math.random() * 6;
+      /** 雷劫：从劫云劈下分叉闪电，落点对准目标；big=破境大雷 */
+      const strikeAt = (tx: number, ty: number, big: boolean) => {
         const pts: { x: number; y: number }[] = [];
         const branches: { x: number; y: number }[][] = [];
-        let x = cx + (Math.random() - 0.5) * R * 1.4;
-        let y = cy + R * 0.18;
+        let x = cx + (Math.random() - 0.5) * R * 0.9;
+        let y = cy + R * 0.22;
         pts.push({ x, y });
-        for (let i = 0; i < 6; i++) {
-          x += (Math.random() - 0.55) * 22;
-          y += h * 0.07;
+        const segs = big ? 9 : 7;
+        for (let i = 0; i < segs; i++) {
+          x += (tx - x) * 0.24 + (Math.random() - 0.5) * 26;
+          y += (ty - y) * 0.24 + (Math.random() - 0.35) * 10;
           pts.push({ x, y });
-          if (Math.random() < 0.45) {
-            const bx = x + (Math.random() - 0.5) * 28;
-            const by = y + 12 + Math.random() * 16;
+          if (Math.random() < (big ? 0.6 : 0.45)) {
+            const bx = x + (Math.random() - 0.5) * 44;
+            const by = y + 14 + Math.random() * 26;
             branches.push([
               { x, y },
+              { x: (x + bx) / 2 + (Math.random() - 0.5) * 10, y: (y + by) / 2 },
               { x: bx, y: by },
             ]);
           }
         }
-        bolt = { pts, branches, life: 0.2 };
+        pts.push({ x: tx, y: ty });
+        bolt = { pts, branches, life: big ? 0.3 : 0.22 };
+        boltFlash = Math.max(boltFlash, big ? 0.5 : 0.26);
+        trauma = Math.min(1, trauma + (big ? 0.3 : 0.15));
+      };
+      /** 落点：优先劈向已解锁建筑，否则劈向劫云正下方地面 */
+      const strikeRandomTarget = (big: boolean) => {
+        const st2 = useGame.getState();
+        const ownedIds = BUILDINGS.map((b) => b.id).filter((id) => (st2.buildings[id] ?? 0) > 0);
+        let tx: number;
+        let ty: number;
+        if (ownedIds.length > 0 && Math.random() < 0.7) {
+          const id = ownedIds[Math.floor(Math.random() * ownedIds.length)];
+          const slot = BUILDING_SLOTS[id];
+          const p = slot ? slotXY(slot.nx, slot.ny, w, h, blit) : null;
+          tx = (p ? p.x : w * 0.5) + (Math.random() - 0.5) * 20;
+          ty = (p ? p.y : h * 0.7) - 12;
+        } else {
+          tx = cx + (Math.random() - 0.5) * R * 2;
+          ty = cy + R * 2.4 + Math.random() * h * 0.08;
+        }
+        strikeAt(tx, ty, big);
+      };
+      if (pendingBolt) {
+        pendingBolt = false;
+        strikeRandomTarget(true);
+      }
+      if (lightningT < 0) {
+        // 5–12s 一道，节奏错落，不频繁
+        lightningT = 5 + Math.random() * 7;
+        strikeRandomTarget(false);
       }
       if (bolt) {
         bolt.life -= dt;
@@ -855,8 +867,8 @@ export function WorldCanvas() {
           def.color === "#a63d32" || def.color === "#6e2a24"
             ? def.color
             : def.projectile === "sword"
-              ? "#3a3630"
-              : "#2a2622";
+              ? "#46545b"
+              : "#2c383e";
         spawnParticle({
           x: sx,
           y: sy,
@@ -934,7 +946,7 @@ export function WorldCanvas() {
               vy: Math.sin(g.ang) * 20,
               life: 0.45,
               max: 0.45,
-              color: "#a63d32",
+              color: "#b13a2c",
               kind: "sword",
               size: 3,
             });
@@ -1001,18 +1013,18 @@ export function WorldCanvas() {
         ctx.save();
         for (let k = 1; k <= 3; k++) {
           ctx.globalAlpha = 0.07 / k;
-          ctx.fillStyle = "#1c1914";
+          ctx.fillStyle = "#2c383e";
           ctx.beginPath();
           ctx.arc(p.x - face * k * 8 * crane.sc, by + Math.sin(time + crane.ph + k) * 1.5, 1.4 / k, 0, Math.PI * 2);
           ctx.fill();
         }
         ctx.restore();
-        drawCrane(ctx, p.x, by, time + crane.ph, crane.sc, face);
+        drawCraneReal(ctx, p.x, by, time + crane.ph, 54 * crane.sc, face);
       }
 
       for (const m of motes) {
         ctx.globalAlpha = 0.14 + 0.1 * Math.sin(time + m.ph);
-        ctx.fillStyle = "#1c1914";
+        ctx.fillStyle = "#2c383e";
         ctx.beginPath();
         ctx.arc(m.x * w, m.y * h, 1.1, 0, Math.PI * 2);
         ctx.fill();
@@ -1023,6 +1035,8 @@ export function WorldCanvas() {
         drawDistantPeaks(ctx, w, h);
         drawPeaks(ctx, w, h, 0);
       }
+      // 山间石径：始终绘制，弟子行走的路看得见
+      drawPath(ctx, w, h);
       drawTribCloud(ctx, cx, cy, R * (1.18 + vortexPulse * 0.07), vortexPulse, time);
 
       paintBuildings(0, st, painted);
@@ -1034,7 +1048,6 @@ export function WorldCanvas() {
       }
       paintBuildings(1, st, painted);
       paintWalkers(0.4, 0.62);
-      if (!painted) drawPath(ctx, w, h);
 
       if (!painted) {
         drawPeaks(ctx, w, h, 2);
@@ -1062,24 +1075,6 @@ export function WorldCanvas() {
         drawStamp(ctx, p.x, p.y, mark.id, mark.owned, mark.locked);
       }
 
-      if (blit && blit.dw > w + 16) {
-        const extra = blit.dw - w;
-        const max = extra / 2;
-        ctx.save();
-        ctx.font = "600 18px 'Noto Serif SC', serif";
-        ctx.fillStyle = "rgba(28,25,20,0.28)";
-        ctx.textBaseline = "middle";
-        if (pan < max - 8) {
-          ctx.textAlign = "left";
-          ctx.fillText("‹", 8, h * 0.48);
-        }
-        if (pan > -max + 8) {
-          ctx.textAlign = "right";
-          ctx.fillText("›", w - 8, h * 0.48);
-        }
-        ctx.restore();
-      }
-
       const shownGuests = guests.slice(0, 8);
       for (const g of shownGuests) {
         const land = slotXY(g.nx, g.ny, w, h, blit);
@@ -1096,7 +1091,7 @@ export function WorldCanvas() {
           ctx.strokeStyle = "rgba(243,238,228,0.85)";
           ctx.lineWidth = 4;
           ctx.strokeText(g.name, x, y - 18);
-          ctx.fillStyle = "#1c1914";
+          ctx.fillStyle = "#2c383e";
           ctx.fillText(g.name, x, y - 18);
           ctx.restore();
         } else if (g.rarity >= 3) {
@@ -1111,23 +1106,37 @@ export function WorldCanvas() {
       }
 
       if (bolt) {
+        // 三层辉光：外晕蓝 → 中层冷白 → 核心纯白
         const a = Math.min(1, bolt.life * 5);
-        ctx.strokeStyle = `rgba(243,238,228,${a * 0.45})`;
-        ctx.lineWidth = 4;
         ctx.lineJoin = "round";
-        ctx.beginPath();
-        ctx.moveTo(bolt.pts[0].x, bolt.pts[0].y);
-        for (const p of bolt.pts) ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-        ctx.strokeStyle = `rgba(28,25,20,${a})`;
-        ctx.lineWidth = 1.3;
-        ctx.stroke();
-        for (const br of bolt.branches) {
+        ctx.lineCap = "round";
+        const passes: Array<[string, number]> = [
+          [`rgba(140,190,255,${a * 0.35})`, 7],
+          [`rgba(225,240,255,${a * 0.85})`, 3],
+          [`rgba(255,255,255,${a})`, 1.2],
+        ];
+        const traceBolt = () => {
           ctx.beginPath();
-          ctx.moveTo(br[0].x, br[0].y);
-          ctx.lineTo(br[1].x, br[1].y);
+          ctx.moveTo(bolt!.pts[0].x, bolt!.pts[0].y);
+          for (const p of bolt!.pts) ctx.lineTo(p.x, p.y);
+          for (const br of bolt!.branches) {
+            ctx.moveTo(br[0].x, br[0].y);
+            for (let i = 1; i < br.length; i++) ctx.lineTo(br[i].x, br[i].y);
+          }
+        };
+        for (const [style, lw] of passes) {
+          ctx.strokeStyle = style;
+          ctx.lineWidth = lw;
+          traceBolt();
           ctx.stroke();
         }
+        // 落点冲击环
+        const tip = bolt.pts[bolt.pts.length - 1];
+        ctx.strokeStyle = `rgba(225,240,255,${a * 0.8})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, (1 - a) * 30 + 6, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       if (orb) {
@@ -1138,11 +1147,11 @@ export function WorldCanvas() {
         ctx.beginPath();
         ctx.arc(oxp, oyp, pulse + 6, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#a63d32";
+        ctx.fillStyle = "#b13a2c";
         ctx.beginPath();
         ctx.arc(oxp, oyp, pulse, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#f3eee4";
+        ctx.fillStyle = "#f2faf6";
         ctx.fillRect(Math.round(oxp) - 1, Math.round(oyp) - 1, 2, 2);
       }
 
@@ -1164,7 +1173,7 @@ export function WorldCanvas() {
           ctx.globalAlpha = a;
           ctx.fillStyle = p.color;
           ctx.fillRect(0, -1, 11, 2);
-          ctx.fillStyle = "#f3eee4";
+          ctx.fillStyle = "#f2faf6";
           ctx.fillRect(9, -2, 3, 4);
           ctx.restore();
         } else if (p.kind === "mote") {
@@ -1194,19 +1203,24 @@ export function WorldCanvas() {
       ctx.strokeStyle = "rgba(28,25,20,0.55)";
       ctx.lineWidth = 4;
       ctx.strokeText(formatNum(Math.max(0, st.layerHp)), cx, cy + R * 0.82);
-      ctx.fillStyle = "#f3eee4";
+      ctx.fillStyle = "#f2faf6";
       ctx.fillText(formatNum(Math.max(0, st.layerHp)), cx, cy + R * 0.82);
 
       ctx.font = "600 13px 'Noto Sans SC', sans-serif";
       for (const f of floaters) {
         ctx.globalAlpha = Math.max(0, f.life);
-        ctx.fillStyle = f.crit ? "#a63d32" : "#1c1914";
+        ctx.fillStyle = f.crit ? "#b13a2c" : "#2c383e";
         ctx.fillText(f.n, f.x, f.y);
         ctx.globalAlpha = 1;
       }
 
       if (flash > 0) {
-        ctx.fillStyle = `rgba(243,238,228,${flash * 0.32})`;
+        ctx.fillStyle = `rgba(242,250,246,${flash * 0.32})`;
+        ctx.fillRect(-4, -4, w + 8, h + 8);
+      }
+      if (boltFlash > 0) {
+        // 雷击闪白：冷白色，比普通事件闪更亮更短
+        ctx.fillStyle = `rgba(235,244,252,${boltFlash * 0.5})`;
         ctx.fillRect(-4, -4, w + 8, h + 8);
       }
     };

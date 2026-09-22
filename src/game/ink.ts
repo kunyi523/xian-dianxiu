@@ -2,6 +2,31 @@ import { BUILDINGS, HERB_PER_MIN_PER_LV, ORE_PER_MIN_PER_LV, type BuildingDef } 
 
 export const TIER_NAME = ["", "草创", "开山", "仙府", "仙宫"] as const;
 
+/* ---------- 清新调色板 v9（一念逍遥风：去黄去旧） ----------
+ * 天空淡蓝 → 山峦青绿 → 墨色青灰 → 水面明澈，金只做克制点缀。
+ * 所有世界渲染统一走这里，不要再散写暖黄/赭石色值。 */
+export const PAL = {
+  skyTop: "#c9e6f2", // 天空·淡蓝
+  skyMid: "#ddf0ea", // 天空·蓝绿过渡
+  skyBot: "#f2faf6", // 天空·近白
+  peakFar: "#a9cbbb", // 远山·青绿
+  peakMid: "#7fb3a2", // 中山·青
+  peakNear: "#55897c", // 近山·深青
+  ink: "#2c383e", // 墨·青灰（主）
+  inkSoft: "#46545b", // 墨·青灰（淡）
+  inkFaint: "rgba(44,56,62,", // 需拼 alpha 的墨
+  water: "#bfe3ea", // 水·明澈
+  mist: "rgba(224,240,236,", // 雾·青白
+  stone: "#d4dcd8", // 石径·浅
+  stoneEdge: "#9fb2ab", // 石径·边
+  gold: "#c9a227", // 金·克制点缀
+  seal: "#b13a2c", // 朱砂·稍亮，配清新底
+  paper: "#f2faf6", // 纸·青白
+  ghost: "#8fa6ab", // 虚印地基·青灰
+  robeBlue: "#3d5a66",
+  robeWhite: "#eef5f2",
+} as const;
+
 /** 建筑五阶段:0废墟 1雏形(破) 2成型 3宏伟 4仙宫(满级) */
 export function buildingTier(lv: number): 0 | 1 | 2 | 3 | 4 {
   if (lv <= 0) return 0;
@@ -57,8 +82,8 @@ export function setFxAssetBase(b: string) {
 }
 const fxImgCache = new Map<string, HTMLImageElement>();
 const fxImgMissing = new Set<string>();
-/** 取特效逐帧贴图,只拼 {kind}_f{n}.png(jietu_f1..f6 / xianqi_f1..f6)。缺图打日志,不做 fallback。 */
-export function fxImg(kind: "jietu" | "xianqi", frame: number): HTMLImageElement | null {
+/** 取特效逐帧贴图,只拼 {kind}_f{n}.png(jielei_f1..f6 / xianqi_f1..f6)。缺图打日志,不做 fallback。 */
+export function fxImg(kind: "jielei" | "xianqi", frame: number): HTMLImageElement | null {
   const key = `${kind}_f${frame}`;
   let img = fxImgCache.get(key);
   if (!img) {
@@ -75,6 +100,52 @@ export function fxImg(kind: "jietu" | "xianqi", frame: number): HTMLImageElement
   return img.complete && img.naturalWidth > 0 ? img : null;
 }
 
+/* ---------- 仙鹤实拍 PNG（替代旧线条鹤） ---------- */
+let craneLogged = false;
+const craneImgCache: { img: HTMLImageElement | null } = { img: null };
+/** public/sprites/crane_real.png。缺图打一次日志，不画线条鹤回退。 */
+export function craneImg(): HTMLImageElement | null {
+  if (!craneImgCache.img) {
+    const img = new Image();
+    img.src = `${inkAssetBase}/crane_real.png`;
+    img.onerror = () => {
+      if (!craneLogged) {
+        craneLogged = true;
+        console.warn("[ink] 仙鹤贴图缺失:crane_real.png,不做 fallback");
+      }
+    };
+    craneImgCache.img = img;
+  }
+  const img = craneImgCache.img;
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
+/**
+ * 实拍仙鹤：按展翅姿态绘制，带飞行起伏与轻微倾摆。
+ * wPx 为期望翼展像素宽。
+ */
+export function drawCraneReal(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t: number,
+  wPx: number,
+  facing: number,
+) {
+  const img = craneImg();
+  if (!img) return;
+  const bobY = Math.sin(t * 1.6) * wPx * 0.06;
+  const tilt = Math.sin(t * 1.1) * 0.07;
+  const ratio = img.naturalHeight / Math.max(1, img.naturalWidth);
+  const dw = wPx;
+  const dh = wPx * ratio;
+  ctx.save();
+  ctx.translate(x, y + bobY);
+  ctx.rotate(tilt * facing);
+  ctx.scale(facing, 1);
+  ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+  ctx.restore();
+}
 /* ---------- 分级 PNG 精灵绘制(统一 footprint) ---------- */
 /**
  * 精灵图统一 1600x1600,建筑脚底在底部 40px 边距处、水平居中。
@@ -245,6 +316,18 @@ export function panBlit(blit: Blit, pan: number, w: number): Blit {
   return { ...blit, dx: (w - blit.dw) / 2 + p };
 }
 
+/**
+ * 背景装饰图适配（高屏手机）：
+ * 宽度铺满；图高于屏则垂直居中裁，图矮于屏则贴底、上方留天空渐变。
+ * 世界坐标不再跟随图片走（统一用屏幕坐标），背景只做装饰。
+ */
+export function backdropBlit(imgW: number, imgH: number, w: number, h: number): Blit {
+  const dw = w;
+  const dh = (dw / Math.max(1, imgW)) * Math.max(1, imgH);
+  const dy = dh >= h ? (h - dh) / 2 : h - dh;
+  return { dx: 0, dy, dw, dh };
+}
+
 export function slotXY(nx: number, ny: number, w: number, h: number, blit: Blit | null) {
   if (!blit) return { x: nx * w, y: ny * h };
   return { x: blit.dx + nx * blit.dw, y: blit.dy + ny * blit.dh };
@@ -330,9 +413,10 @@ export function buildingsInBand(band: 0 | 1 | 2) {
   );
 }
 
-const SKIN = ["#e2b48a", "#d4a074", "#c48e62", "#ebc4a0", "#d8aa80", "#c9a078"];
-const HAIR = ["#1a1612", "#2a2420", "#1c1814", "#3a342c"];
-const ROBE = ["#cfc6b8", "#a63d32", "#3a3630", "#e8e0d2", "#5c564c", "#6e2a24"];
+// 人物配色：青白为主，朱砂/玄青点缀，配清新背景
+const SKIN = ["#e8c39a", "#dfb183", "#d09a6e", "#f0cfae", "#ddac82", "#cfa37e"];
+const HAIR = ["#232a2e", "#2e363b", "#1f2529", "#3a444a"];
+const ROBE = ["#eef5f2", "#b13a2c", "#3d5a66", "#f6faf8", "#5c7078", "#8c2f28"];
 
 // 渐变缓存:createRadial/LinearGradient 有开销,动画参数量化后跨帧复用同一对象
 const gradCache = new Map<string, CanvasGradient>();
@@ -376,9 +460,9 @@ export function drawSky(ctx: CanvasRenderingContext2D, w: number, h: number) {
   let g = skyCache.get(key);
   if (!g) {
     g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, "#e4dccb");
-    g.addColorStop(0.45, "#d8cfc0");
-    g.addColorStop(1, "#cfc6b6");
+    g.addColorStop(0, PAL.skyTop);
+    g.addColorStop(0.45, PAL.skyMid);
+    g.addColorStop(1, PAL.skyBot);
     if (skyCache.size > 8) skyCache.clear();
     skyCache.set(key, g);
   }
@@ -387,7 +471,7 @@ export function drawSky(ctx: CanvasRenderingContext2D, w: number, h: number) {
 }
 
 export function drawDistantPeaks(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  ctx.fillStyle = "#c4baa8";
+  ctx.fillStyle = PAL.peakFar;
   ctx.beginPath();
   ctx.moveTo(0, h * 0.38);
   ctx.lineTo(w * 0.3, h * 0.22);
@@ -399,7 +483,7 @@ export function drawDistantPeaks(ctx: CanvasRenderingContext2D, w: number, h: nu
 }
 
 export function drawPeaks(ctx: CanvasRenderingContext2D, w: number, h: number, band: 0 | 1 | 2) {
-  const fill = ["#b3a894", "#9c9280", "#8a8478"][band];
+  const fill = [PAL.peakFar, PAL.peakMid, PAL.peakNear][band];
   ctx.fillStyle = fill;
   ctx.beginPath();
   const y0 = h * (0.28 + band * 0.18);
@@ -413,14 +497,14 @@ export function drawPeaks(ctx: CanvasRenderingContext2D, w: number, h: number, b
 
 export function drawWaterfall(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
   ctx.save();
-  ctx.globalAlpha = 0.28;
-  ctx.strokeStyle = "#f3eee4";
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = "#eaf6fb";
   ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.moveTo(w * 0.18, h * 0.22);
   ctx.lineTo(w * 0.2, h * 0.62);
   ctx.stroke();
-  ctx.globalAlpha = 0.18 + 0.08 * Math.sin(t * 4);
+  ctx.globalAlpha = 0.35 + 0.12 * Math.sin(t * 4);
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(w * 0.175, h * 0.24 + ((t * 40) % 20));
@@ -430,29 +514,37 @@ export function drawWaterfall(ctx: CanvasRenderingContext2D, w: number, h: numbe
 }
 
 export function drawPath(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  // 三条淡墨径：山麓最实，朝圣最淡
-  const alphas = [0.32, 0.22, 0.14];
+  // 三条淡雅石径：山麓最实，朝圣最淡；双色叠画，有石板路感
   MOUNTAIN_PATHS.forEach((path, pi) => {
-    ctx.strokeStyle = `rgba(92,86,76,${alphas[pi] ?? 0.18})`;
-    ctx.lineWidth = pi === 0 ? 2.6 : 1.8;
-    ctx.beginPath();
-    path.forEach((p, i) => {
-      const x = p.nx * w;
-      const y = p.ny * h;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
+    const trace = () => {
+      ctx.beginPath();
+      path.forEach((p, i) => {
+        const x = p.nx * w;
+        const y = p.ny * h;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+    };
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.strokeStyle = `rgba(159,178,171,${[0.42, 0.3, 0.22][pi] ?? 0.25})`;
+    ctx.lineWidth = pi === 0 ? 7 : 5;
+    trace();
+    ctx.stroke();
+    ctx.strokeStyle = `rgba(228,235,231,${[0.9, 0.72, 0.55][pi] ?? 0.6})`;
+    ctx.lineWidth = pi === 0 ? 3.4 : 2.4;
+    trace();
     ctx.stroke();
   });
 }
 
 export function drawBandMist(ctx: CanvasRenderingContext2D, w: number, h: number, band: number) {
-  ctx.fillStyle = `rgba(243,238,228,${0.08 + band * 0.04})`;
+  ctx.fillStyle = `${PAL.mist}${0.12 + band * 0.05})`;
   ctx.fillRect(0, h * (0.35 + band * 0.2), w, 28);
 }
 
 export function drawForeground(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  ctx.fillStyle = "#7a7468";
+  ctx.fillStyle = "#3f5158";
   ctx.beginPath();
   ctx.moveTo(0, h);
   ctx.lineTo(0, h * 0.92);
@@ -490,17 +582,17 @@ export function drawCultivator(
   }
   ctx.fillStyle = skin;
   ctx.fillRect(-2, -6, 5, 4);
-  ctx.fillStyle = "#2a2018";
+  ctx.fillStyle = PAL.ink;
   ctx.fillRect(-1, -5, 1, 1);
   ctx.fillRect(1, -5, 1, 1);
   ctx.fillStyle = robe;
   ctx.fillRect(-3, -2, 7, 5);
-  ctx.fillStyle = variant % 2 === 0 ? "#a63d32" : "#3a3630";
+  ctx.fillStyle = variant % 2 === 0 ? PAL.seal : PAL.robeBlue;
   ctx.fillRect(-3, -1, 7, 1);
   ctx.fillStyle = robe;
   ctx.fillRect(-2 + stride * 1.2, 3, 2, 3.2);
   ctx.fillRect(1 - stride * 1.2, 3, 2, 3.2);
-  ctx.fillStyle = "#2a2622";
+  ctx.fillStyle = PAL.ink;
   ctx.fillRect(-2 + stride * 1.2, 6, 2, 1);
   ctx.fillRect(1 - stride * 1.2, 6, 2, 1);
   ctx.restore();
@@ -517,21 +609,21 @@ export function drawSwordRider(
 ) {
   const bob = Math.sin(t * 5.1) * 1.4;
   const tilt = Math.sin(t * 2.4) * 0.12;
-  const robe = rarity >= 5 ? "#a63d32" : rarity >= 3 ? "#2a2622" : rarity >= 1 ? "#4a453e" : "#cfc6b8";
+  const robe = rarity >= 5 ? PAL.seal : rarity >= 3 ? PAL.ink : rarity >= 1 ? PAL.inkSoft : PAL.robeWhite;
   ctx.save();
   ctx.translate(x, y + bob);
   ctx.rotate(tilt);
   ctx.scale(scale * facing, scale);
-  ctx.strokeStyle = "#1c1914";
+  ctx.strokeStyle = PAL.ink;
   ctx.lineWidth = 1.4;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(-11, 5);
   ctx.lineTo(12, 2.4);
   ctx.stroke();
-  ctx.fillStyle = "#e2b48a";
+  ctx.fillStyle = "#e8c39a";
   ctx.fillRect(-2, -8, 4, 4);
-  ctx.fillStyle = "#1a1612";
+  ctx.fillStyle = PAL.ink;
   ctx.fillRect(-2, -9, 4, 2);
   ctx.fillStyle = robe;
   ctx.fillRect(-3, -4, 6, 6);
@@ -541,7 +633,7 @@ export function drawSwordRider(
 export function drawCrane(ctx: CanvasRenderingContext2D, x: number, y: number, t: number, scale = 1, facing = 1) {
   const flap = Math.sin(t * 3.4);
   const wLift = flap * 8;
-  const ink = "#1c1914";
+  const ink = PAL.ink;
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(scale * facing, scale);
@@ -655,19 +747,19 @@ export function drawTribCloud(
   const cyq = Math.round(cy);
   const gk = `${cxq},${cyq},${sq},${pq}`;
   ctx.save();
-  // 外圈淡墨晕（水墨 wash）
+  // 外圈青灰晕（云气 wash）
   const wash = radialCached(ctx, `wash:${gk}`, cxq, cyq, sq * 0.15, cxq, cyq, sq * 2.4, [
-    [0, `rgba(28,25,20,${0.14 + pq * 0.06})`],
-    [0.45, "rgba(28,25,20,0.07)"],
-    [1, "rgba(28,25,20,0)"],
+    [0, `${PAL.inkFaint}${0.16 + pq * 0.06})`],
+    [0.45, `${PAL.inkFaint}0.07)`],
+    [1, `${PAL.inkFaint}0)`],
   ]);
   ctx.fillStyle = wash;
   ctx.beginPath();
   ctx.ellipse(cx, cy + s * 0.05, s * 2.35, s * 1.15, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 劫云主体:六帧 PNG(jietu_f1..f6)替代旧矢量墨云,pulse 只调尺寸与透明
-  const fx = fxImg("jietu", Math.floor(t * 6) % 6 + 1);
+  // 劫云主体:六帧 PNG(jielei_f1..f6 雷劫云),pulse 只调尺寸与透明
+  const fx = fxImg("jielei", Math.floor(t * 6) % 6 + 1);
   if (fx) {
     const fs = s * (4.7 + pulse * 0.18); // PNG 全帧即云团,按原洗染范围对齐
     ctx.globalAlpha = 0.97;
@@ -687,17 +779,17 @@ export function drawTribCloud(
     cyq,
     sealR,
     [
-      [0, `rgba(166,61,50,${0.72 + pq * 0.2})`],
-      [0.45, `rgba(166,61,50,${0.28 + pq * 0.12})`],
-      [1, "rgba(166,61,50,0)"],
+      [0, `rgba(177,58,44,${0.72 + pq * 0.2})`],
+      [0.45, `rgba(177,58,44,${0.28 + pq * 0.12})`],
+      [1, "rgba(177,58,44,0)"],
     ],
   );
   ctx.fillStyle = seal;
   ctx.beginPath();
   ctx.ellipse(cx + s * 0.05, cy, s * (0.16 + pulse * 0.35), s * (0.08 + pulse * 0.16), 0.12, 0, Math.PI * 2);
   ctx.fill();
-  // 宣纸高光一点
-  ctx.fillStyle = `rgba(243,238,228,${0.22 + pulse * 0.15})`;
+  // 云端高光一点
+  ctx.fillStyle = `rgba(242,250,246,${0.22 + pulse * 0.15})`;
   ctx.beginPath();
   ctx.ellipse(cx - s * 0.06, cy - s * 0.05, s * 0.045, s * 0.022, -0.4, 0, Math.PI * 2);
   ctx.fill();
@@ -718,18 +810,18 @@ export function drawStamp(
   ctx.globalAlpha = owned ? 0.7 : locked ? 0.38 : 0.55;
   ctx.beginPath();
   ctx.arc(0, 0, r + 1.6, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(243,238,228,0.32)";
+  ctx.fillStyle = "rgba(242,250,246,0.35)";
   ctx.fill();
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.fillStyle = owned ? "rgba(28,25,20,0.68)" : locked ? "rgba(92,86,76,0.5)" : "rgba(58,54,48,0.55)";
+  ctx.fillStyle = owned ? "rgba(44,56,62,0.72)" : locked ? "rgba(143,166,171,0.55)" : "rgba(70,84,91,0.6)";
   ctx.fill();
-  ctx.strokeStyle = owned ? "rgba(243,238,228,0.62)" : "rgba(138,132,120,0.45)";
+  ctx.strokeStyle = owned ? "rgba(242,250,246,0.65)" : "rgba(159,178,171,0.5)";
   ctx.lineWidth = 1.2;
   ctx.stroke();
   ctx.globalAlpha = locked ? 0.55 : 0.95;
-  ctx.fillStyle = "#f3eee4";
-  ctx.strokeStyle = "#f3eee4";
+  ctx.fillStyle = "#f2faf6";
+  ctx.strokeStyle = "#f2faf6";
   ctx.lineWidth = 1.2;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -745,8 +837,8 @@ export function drawStamp(
 }
 
 function drawStampMark(ctx: CanvasRenderingContext2D, id: string) {
-  ctx.strokeStyle = "#f3eee4";
-  ctx.fillStyle = "#f3eee4";
+  ctx.strokeStyle = "#f2faf6";
+  ctx.fillStyle = "#f2faf6";
   ctx.lineWidth = 1.25;
   ctx.lineCap = "round";
   if (id === "sword") {
@@ -829,7 +921,7 @@ function drawQiThreads(
     const py = y - life * height;
     const a = (1 - life) * (1 - life) * 0.42;
     ctx.globalAlpha = a;
-    ctx.strokeStyle = tint === "seal" ? "#a63d32" : tint === "paper" ? "#f3eee4" : "#3a3630";
+    ctx.strokeStyle = tint === "seal" ? PAL.seal : tint === "paper" ? PAL.paper : PAL.inkSoft;
     ctx.lineWidth = 1 + (1 - life) * 0.6;
     ctx.beginPath();
     ctx.moveTo(x + Math.sin(seed) * spread * 0.25, y);
@@ -867,7 +959,7 @@ function drawGhostFoundation(
 ) {
   const breath = 0.2 + 0.07 * Math.sin(t * 1.15 + x * 0.01);
   ctx.save();
-  ctx.strokeStyle = "#6b6455";
+  ctx.strokeStyle = PAL.ghost;
   ctx.lineWidth = Math.max(1, s * 0.022);
   ctx.setLineDash([s * 0.085, s * 0.065]);
   // 外圈:地基轮廓,与建筑 footprint 对齐,脚底锚定 (x, y)
@@ -1126,14 +1218,14 @@ export function drawUpgradeBurst(
   ctx.save();
   const a = Math.min(1, fl);
   ctx.globalAlpha = a * 0.55;
-  ctx.fillStyle = "#f3eee4";
+  ctx.fillStyle = PAL.paper;
   ctx.beginPath();
   ctx.ellipse(x, y + 6, 18 + (1 - a) * 70, 10 + (1 - a) * 28, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = a * 0.7;
-  ctx.fillStyle = tierUp ? "rgba(166,61,50,0.55)" : "rgba(243,238,228,0.55)";
+  ctx.fillStyle = tierUp ? "rgba(177,58,44,0.55)" : "rgba(242,250,246,0.55)";
   ctx.fillRect(x - (tierUp ? 5 : 3), y - (40 + (1 - a) * 90), tierUp ? 10 : 6, 50 + (1 - a) * 90);
-  ctx.strokeStyle = `rgba(166,61,50,${a})`;
+  ctx.strokeStyle = `rgba(177,58,44,${a})`;
   ctx.lineWidth = tierUp ? 3 : 2;
   ctx.beginPath();
   ctx.arc(x, y, 16 + (1 - a) * (tierUp ? 70 : 40), 0, Math.PI * 2);

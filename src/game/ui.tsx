@@ -97,11 +97,11 @@ export function Hud() {
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
-      <div className="pointer-events-auto flex items-stretch gap-2 px-2 pt-[max(8px,env(safe-area-inset-top))]">
+      <div className="pointer-events-auto flex items-stretch gap-2.5 px-3 pt-[max(12px,env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={() => useGame.getState().setMenu(true)}
-          className="hud-stat flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden p-0"
+          className="hud-stat flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden p-0"
           aria-label="宗主"
         >
           <img src={portrait} alt="" className="h-full w-full object-cover object-top" />
@@ -110,39 +110,39 @@ export function Hud() {
           <button
             type="button"
             onClick={() => useGame.getState().claimMission(ready.id)}
-            className="hud-stat flex min-h-12 min-w-0 flex-1 items-center justify-between gap-2 px-3 text-left"
+            className="hud-stat flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 px-4 text-left"
           >
-            <span className="truncate text-sm font-medium text-ink">{ready.title}</span>
-            <span className="shrink-0 text-sm text-seal">领取 · 玉×{ready.rewardJade}</span>
+            <span className="truncate text-base font-medium text-ink">{ready.title}</span>
+            <span className="shrink-0 text-base font-semibold text-seal">领取 · 玉×{ready.rewardJade}</span>
           </button>
         ) : !lab && jade >= 20 ? (
           <button
             type="button"
             onClick={() => useGame.getState().unlockLab()}
-            className="hud-stat flex min-h-12 min-w-0 flex-1 items-center px-3 text-left text-sm font-medium text-ink"
+            className="hud-stat flex min-h-14 min-w-0 flex-1 items-center px-4 text-left text-base font-medium text-ink"
           >
             解锁藏经阁
           </button>
         ) : mission ? (
-          <div className="hud-stat flex min-h-12 min-w-0 flex-1 items-center justify-between gap-2 px-3">
+          <div className="hud-stat flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 px-4">
             <div className="min-w-0">
-              <div className="truncate text-sm text-ink">{mission.title}</div>
-              <div className="text-xs tabular-nums text-muted">
+              <div className="truncate text-base text-ink">{mission.title}</div>
+              <div className="text-sm tabular-nums text-muted">
                 {formatMissionProgress(mission.progress, mission.target)}
               </div>
             </div>
-            <span className="shrink-0 text-xs text-seal">玉×{mission.rewardJade}</span>
+            <span className="shrink-0 text-sm font-medium text-seal">玉×{mission.rewardJade}</span>
           </div>
         ) : (
-          <div className="hud-stat min-h-12 flex-1" />
+          <div className="hud-stat min-h-14 flex-1" />
         )}
         <button
           type="button"
           onClick={() => useGame.getState().setMenu(true)}
-          className="hud-stat flex h-12 w-12 shrink-0 items-center justify-center"
+          className="hud-stat flex h-14 w-14 shrink-0 items-center justify-center"
           aria-label="菜单"
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="stroke-ink" aria-hidden>
+          <svg width="22" height="22" viewBox="0 0 18 18" fill="none" className="stroke-ink" aria-hidden>
             <path d="M3 5h12M3 9h12M3 13h12" strokeWidth="1.6" />
           </svg>
         </button>
@@ -152,20 +152,20 @@ export function Hud() {
       <div
         className={
           tab === null
-            ? "pointer-events-none absolute right-2 top-[4.25rem] flex w-36 flex-col gap-1.5"
-            : "pointer-events-none absolute inset-x-2 top-[4.25rem] z-20 flex flex-wrap justify-end gap-1.5"
+            ? "pointer-events-none absolute inset-x-3 top-[5.25rem] flex gap-2.5"
+            : "pointer-events-none absolute inset-x-3 top-[5.25rem] z-20 flex flex-wrap justify-end gap-2"
         }
       >
         {tab === null ? (
           <>
-            <div className="hud-stat px-2.5 py-2">
-              <div className="text-[10px] tracking-[0.28em] text-muted">香火</div>
-              <div className="font-mono text-3xl leading-none tabular-nums text-ink">{formatNum(qi)}</div>
-              <div className="mt-1 text-xs tabular-nums text-muted">{formatNum(dps)} 山息/秒</div>
+            <div className="hud-stat flex-1 px-4 py-3">
+              <div className="text-xs tracking-[0.28em] text-muted">香火</div>
+              <div className="font-mono text-4xl leading-tight tabular-nums text-ink">{formatNum(qi)}</div>
+              <div className="mt-1 text-sm tabular-nums text-muted">{formatNum(dps)} 山息/秒</div>
             </div>
-            <div className="hud-stat px-2.5 py-2">
-              <div className="text-xs tracking-widest text-muted">资粮</div>
-              <div className="mt-1 space-y-0.5 text-sm tabular-nums text-ink">
+            <div className="hud-stat flex-1 px-4 py-3">
+              <div className="text-xs tracking-[0.28em] text-muted">资粮</div>
+              <div className="mt-1.5 space-y-1 text-base tabular-nums text-ink">
                 <div className="flex justify-between">
                   <span className="text-muted">仙玉</span>
                   <span>{formatNum(jade)}</span>
@@ -183,12 +183,12 @@ export function Hud() {
           </>
         ) : (
           <>
-            <div className="hud-stat px-2.5 py-1.5">
-              <span className="mr-1 text-[10px] tracking-widest text-muted">香火</span>
-              <span className="font-mono text-base leading-none tabular-nums text-ink">{formatNum(qi)}</span>
-              <span className="ml-1.5 text-[10px] tabular-nums text-muted">{formatNum(dps)} 山息</span>
+            <div className="hud-stat px-3.5 py-2.5">
+              <span className="mr-1.5 text-xs tracking-widest text-muted">香火</span>
+              <span className="font-mono text-lg leading-none tabular-nums text-ink">{formatNum(qi)}</span>
+              <span className="ml-1.5 text-xs tabular-nums text-muted">{formatNum(dps)} 山息</span>
             </div>
-            <div className="hud-stat flex items-center gap-2.5 px-2.5 py-1.5 text-xs tabular-nums text-ink">
+            <div className="hud-stat flex items-center gap-3 px-3.5 py-2.5 text-sm tabular-nums text-ink">
               <span>
                 <span className="text-muted">仙玉</span> {formatNum(jade)}
               </span>
@@ -204,7 +204,7 @@ export function Hud() {
       </div>
 
       {combo > 2 && (
-        <div className="pointer-events-none absolute left-3 top-16 font-display text-3xl text-seal">{combo} 开光</div>
+        <div className="pointer-events-none absolute left-4 top-24 font-display text-4xl text-seal">{combo} 开光</div>
       )}
     </div>
   );
@@ -224,7 +224,7 @@ export function BottomNav() {
     { id: "dao", label: "道藏", mark: "道" },
   ];
   return (
-    <nav className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 mx-auto max-w-lg px-2 pb-[max(8px,env(safe-area-inset-bottom))]">
+    <nav className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 mx-auto max-w-lg px-3 pb-[max(12px,env(safe-area-inset-bottom))]">
       <div className="seal-nav">
         {items.map((it) => {
           const on = tab === it.id;
@@ -250,17 +250,17 @@ export function Sheet() {
   const tab = useGame((s) => s.tab);
   if (!tab) return null;
   return (
-    <div className="pointer-events-auto absolute inset-x-0 bottom-16 z-30 mx-auto max-w-lg px-2 pb-1">
-      <div className="sheet-enter hud-box paper-grain max-h-[48vh] overflow-y-auto bg-paper p-3" data-allow-touch-scroll>
+    <div className="pointer-events-auto absolute inset-x-0 bottom-28 z-30 mx-auto max-w-lg px-3 pb-1">
+      <div className="sheet-enter hud-box max-h-[62vh] overflow-y-auto bg-paper p-5" data-allow-touch-scroll>
         <div className="sheet-axis sticky top-0 z-10 bg-paper/95">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <span className="sheet-axis-knob" aria-hidden />
             <span className="sheet-axis-label">{TAB_AXIS[tab] ?? "对照卷"}</span>
           </div>
           <button
             type="button"
             onClick={() => useGame.getState().setTab(tab)}
-            className="flex min-h-9 items-center px-2 text-sm tracking-widest text-muted"
+            className="flex min-h-11 items-center px-3 text-base tracking-widest text-muted"
           >
             收起
           </button>
@@ -279,13 +279,13 @@ function BuyToggle() {
   const mode = useGame((s) => s.buyMode);
   const opts: BuyMode[] = [1, 10, 100, "max"];
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1.5">
       {opts.map((o) => (
         <button
           key={String(o)}
           type="button"
           onClick={() => useGame.getState().setBuyMode(o)}
-          className={`h-7 min-w-9 px-2 text-[11px] ${mode === o ? "bg-ink text-paper" : "bg-paper-2 text-muted"}`}
+          className={`min-h-11 min-w-12 rounded-xl px-3 text-sm font-semibold ${mode === o ? "bg-ink text-paper" : "bg-paper-2 text-muted"}`}
         >
           {o === "max" ? "最大" : `×${o}`}
         </button>
@@ -307,18 +307,18 @@ function SectPanel() {
   ];
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-display text-lg text-ink">仙山对照</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-display text-xl text-ink">仙山对照</h2>
         <BuyToggle />
       </div>
-      <p className="mb-2 text-[11px] text-muted">天道第 {layer + 1} 层 · 主购在山体碑亭，此卷快捷升级</p>
+      <p className="mb-3 text-sm text-muted">天道第 {layer + 1} 层 · 主购在山体碑亭，此卷快捷升级</p>
       {bands.map(({ band, title }) => {
         const list = buildingsInBand(band);
         if (!list.length) return null;
         return (
           <div key={band}>
             <div className="band-head">{title}</div>
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-2.5">
               {list.map((b) => {
                 const i = BUILDINGS.findIndex((x) => x.id === b.id);
                 const unlocked = buildingUnlocked(useGame.getState(), i);
@@ -331,23 +331,23 @@ function SectPanel() {
                 return (
                   <li
                     key={b.id}
-                    className={`flex items-center gap-2 bg-paper-2 p-2 ${unlocked ? "" : "opacity-40"} ${focus === b.id ? "ring-1 ring-seal" : ""}`}
+                    className={`flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5 ${unlocked ? "" : "opacity-40"} ${focus === b.id ? "ring-2 ring-seal" : ""}`}
                   >
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden border border-ink/15 bg-paper">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-ink/10 bg-paper">
                       <img src={`/sprites/building-${b.sprite}.png?v=2`} alt="" className="h-full w-full object-cover object-top" />
                       {tier > 0 && (
-                        <span className="absolute bottom-0 right-0 bg-ink px-1 text-[10px] leading-4 text-paper">
+                        <span className="absolute bottom-0 right-0 rounded-tl-lg bg-ink px-1.5 text-xs leading-5 text-paper">
                           {tierName(b.id, tier)}
                         </span>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-sm font-medium text-ink">{b.name}</span>
-                        <span className="text-xs tabular-nums text-muted">Lv.{lv}</span>
+                        <span className="text-base font-semibold text-ink">{b.name}</span>
+                        <span className="text-sm tabular-nums text-muted">Lv.{lv}</span>
                       </div>
-                      <div className="line-clamp-1 text-[10px] text-faint">{unlocked ? b.flavor : lockHint(b.id, unlocked)}</div>
-                      <div className="text-[11px] tabular-nums text-seal">
+                      <div className="line-clamp-1 text-sm text-faint">{unlocked ? b.flavor : lockHint(b.id, unlocked)}</div>
+                      <div className="mt-0.5 text-sm tabular-nums text-seal">
                         {formatNum(buildingBreath(useGame.getState(), b, Math.max(1, lv)))} 山息/秒
                         {lv > 0 ? ` · ${perkLine(b.id, lv)}` : ""}
                         {next ? ` · ${next - lv}级进阶` : ""}
@@ -357,7 +357,7 @@ function SectPanel() {
                       type="button"
                       disabled={!can}
                       onClick={() => useGame.getState().buyBuilding(b.id)}
-                      className="ink-btn ink-btn-solid shrink-0 px-2 py-2 text-[11px] leading-tight"
+                      className="ink-btn ink-btn-solid min-h-11 shrink-0 px-4 text-sm leading-tight"
                     >
                       {unlocked ? formatNum(cost) : "未开"}
                     </button>
@@ -379,11 +379,11 @@ function MindPanel() {
   const cc = useGame((s) => critChance(s));
   return (
     <div>
-      <h2 className="mb-1 font-display text-lg text-ink">开光</h2>
-      <p className="mb-3 text-[11px] text-muted">
+      <h2 className="mb-1 font-display text-xl text-ink">开光</h2>
+      <p className="mb-4 text-sm text-muted">
         开光 {formatNum(power)} · 暴机 {(cc * 100).toFixed(0)}%
       </p>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2.5">
         {CLICK_UPGRADES.map((u) => {
           const lv = clickUp[u.id] ?? 0;
           const maxed = "max" in u && u.max ? lv >= u.max : false;
@@ -391,20 +391,20 @@ function MindPanel() {
           const cost = clickUpgradeCost(u.id, lv);
           const can = !maxed && !locked && qi >= cost;
           return (
-            <li key={u.id} className="flex items-center gap-2 bg-paper-2 p-2">
+            <li key={u.id} className="flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5">
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[13px] font-medium">{u.name}</span>
-                  <span className="text-[11px] text-muted">Lv.{lv}</span>
+                  <span className="text-base font-semibold">{u.name}</span>
+                  <span className="text-sm text-muted">Lv.{lv}</span>
                 </div>
-                <div className="text-[10px] text-faint">{u.desc}</div>
-                {locked && <div className="text-[10px] text-seal">需指尖开光 5 级</div>}
+                <div className="mt-0.5 text-sm text-faint">{u.desc}</div>
+                {locked && <div className="mt-0.5 text-sm text-seal">需指尖开光 5 级</div>}
               </div>
               <button
                 type="button"
                 disabled={!can}
                 onClick={() => useGame.getState().buyClick(u.id)}
-                className="ink-btn ink-btn-solid shrink-0 px-2 py-2 text-[11px]"
+                className="ink-btn ink-btn-solid min-h-11 shrink-0 px-4 text-sm"
               >
                 {maxed ? "已满" : formatNum(cost)}
               </button>
@@ -423,16 +423,16 @@ function FatePanel() {
   const reveal = useGame((s) => s.gachaReveal);
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-display text-lg text-ink">拜山</h2>
-        <span className="text-[11px] text-muted">缘簿余 {40 - pity}</span>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-display text-xl text-ink">拜山</h2>
+        <span className="text-sm text-muted">缘簿余 {40 - pity}</span>
       </div>
-      <div className="mb-3 flex gap-2">
+      <div className="mb-4 flex gap-2.5">
         <button
           type="button"
           disabled={jade < 10}
           onClick={() => useGame.getState().pull(1)}
-          className="ink-btn ink-btn-solid min-h-11 flex-1 py-2 text-[13px]"
+          className="ink-btn ink-btn-solid min-h-12 flex-1 text-base"
         >
           投缘 · 10 缘玉
         </button>
@@ -440,34 +440,34 @@ function FatePanel() {
           type="button"
           disabled={jade < 90}
           onClick={() => useGame.getState().pull(10)}
-          className="ink-btn min-h-11 flex-1 py-2 text-[13px]"
+          className="ink-btn min-h-12 flex-1 text-base"
         >
           十缘 · 90
         </button>
       </div>
       {reveal && (
-        <div className="mb-3 border border-ink/20 bg-paper p-2">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs text-muted">此番拜山所得</span>
-            <button type="button" className="text-[11px] text-seal" onClick={() => useGame.getState().clearGacha()}>
+        <div className="mb-4 rounded-2xl border border-ink/10 bg-paper p-3.5">
+          <div className="mb-2.5 flex items-center justify-between">
+            <span className="text-sm text-muted">此番拜山所得</span>
+            <button type="button" className="min-h-11 px-3 text-sm font-semibold text-seal" onClick={() => useGame.getState().clearGacha()}>
               收下
             </button>
           </div>
-          <div className="grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-5 gap-1.5">
             {reveal.map((r, i) => {
               const d = DISCIPLES.find((x) => x.id === r.id);
               return (
                 <div key={i} className="flex flex-col items-center">
-                  <div className="flex h-20 w-14 items-end overflow-hidden border border-ink/15 bg-paper-2">
-                    <PortraitImg d={d ?? "outer"} className="h-20 w-14 object-cover object-top" />
+                  <div className="flex h-24 w-16 items-end overflow-hidden rounded-xl border border-ink/10 bg-paper-2">
+                    <PortraitImg d={d ?? "outer"} className="h-24 w-16 object-cover object-top" />
                   </div>
-                  <span className="mt-0.5 text-[9px]" style={{ color: inkRarityColor(r.rarity) }}>
+                  <span className="mt-1 text-[11px]" style={{ color: inkRarityColor(r.rarity) }}>
                     {d?.name}
                   </span>
                   {r.isNew && r.rarity >= 3 ? (
-                    <span className="text-[8px] text-seal">新 · {d?.title}</span>
+                    <span className="text-[11px] text-seal">新 · {d?.title}</span>
                   ) : r.isNew ? (
-                    <span className="text-[8px] text-muted">新</span>
+                    <span className="text-[11px] text-muted">新</span>
                   ) : null}
                 </div>
               );
@@ -476,9 +476,9 @@ function FatePanel() {
         </div>
       )}
       {disciples.length === 0 ? (
-        <p className="text-xs text-muted">尚未有人拜山。破层可得仙玉。</p>
+        <p className="text-sm text-muted">尚未有人拜山。破层可得仙玉。</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-2">
+        <ul className="grid grid-cols-2 gap-2.5">
           {disciples
             .slice()
             .sort((a, b) => {
@@ -490,16 +490,16 @@ function FatePanel() {
               const d = DISCIPLES.find((x) => x.id === o.id);
               if (!d) return null;
               return (
-                <li key={o.id} className="flex items-center gap-2 bg-paper-2 p-2">
-                  <div className="h-16 w-12 shrink-0 overflow-hidden border border-ink/15 bg-paper">
-                    <PortraitImg d={d} className="h-16 w-12 object-cover object-top" />
+                <li key={o.id} className="flex items-center gap-2.5 rounded-2xl bg-paper-2/70 p-3">
+                  <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-ink/10 bg-paper">
+                    <PortraitImg d={d} className="h-20 w-16 object-cover object-top" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-ink">
+                    <div className="text-sm font-semibold text-ink">
                       {d.name}
                       {o.stars > 0 ? ` · ${o.stars}印` : ""}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted">
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted">
                       <span className="rarity-stamp" style={{ color: inkRarityColor(d.rarity) }}>
                         {RARITY[d.rarity]}
                       </span>
@@ -571,14 +571,14 @@ function RealmPanel() {
   const now = Date.now();
   return (
     <div>
-      <h2 className="mb-1 font-display text-lg text-ink">云游</h2>
-      <p className="mb-3 text-[11px] text-muted">派山门中人云游闭关。云阶灯火亮起后可多开一路。</p>
-      <div className="mb-3 flex flex-col gap-2">
+      <h2 className="mb-1 font-display text-xl text-ink">云游</h2>
+      <p className="mb-4 text-sm text-muted">派山门中人云游闭关。云阶灯火亮起后可多开一路。</p>
+      <div className="mb-3 flex flex-col gap-2.5">
         {explores.map((slot, i) => (
-          <div key={i} className="bg-paper-2 p-2">
-            <div className="mb-1 text-[11px] text-muted">第 {i + 1} 路</div>
+          <div key={i} className="rounded-2xl bg-paper-2/70 p-3.5">
+            <div className="mb-2 text-sm text-muted">第 {i + 1} 路</div>
             {!slot ? (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {REALMS.map((r) => {
                   const locked = layer < r.unlockLayer;
                   return (
@@ -587,7 +587,7 @@ function RealmPanel() {
                       type="button"
                       disabled={locked}
                       onClick={() => useGame.getState().startExplore(i, r.id)}
-                      className="ink-btn min-h-9 px-2 py-1 text-[11px]"
+                      className="ink-btn min-h-11 px-3 text-sm"
                     >
                       {locked ? `${r.name} · ${r.unlockLayer}层` : `${r.name} · ${formatTime(r.duration)}`}
                     </button>
@@ -598,12 +598,12 @@ function RealmPanel() {
               <button
                 type="button"
                 onClick={() => useGame.getState().claimExplore(i)}
-                className="ink-btn ink-btn-solid min-h-11 w-full py-2 text-[13px]"
+                className="ink-btn ink-btn-solid min-h-12 w-full text-base"
               >
                 云游归来
               </button>
             ) : (
-              <div className="text-xs text-ink-2">
+              <div className="text-sm text-ink-2">
                 {REALMS.find((r) => r.id === slot.realmId)?.name} · 剩余 {formatTime((slot.endAt - now) / 1000)}
               </div>
             )}
@@ -628,56 +628,56 @@ function DaoPanel() {
   const ore = useGame((s) => s.ore);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-7">
       <div>
-        <h2 className="font-display text-lg text-ink">劫后归山</h2>
-        <p className="mb-2 text-[11px] text-muted">
+        <h2 className="font-display text-xl text-ink">劫后归山</h2>
+        <p className="mb-3 mt-1 text-sm text-muted">
           已归山 {prestigeCount} 次 · 本次可得道果 {fruit || "—"}
         </p>
         <button
           type="button"
           disabled={fruit < 1}
           onClick={() => useGame.getState().prestige()}
-          className="ink-btn ink-btn-solid min-h-11 w-full py-2 text-[13px]"
+          className="ink-btn ink-btn-solid min-h-13 w-full text-base"
         >
           {fruit < 1 ? "山息未满，不可归山" : `劫后归山 · 得 ${fruit} 道果`}
         </button>
-        <p className="mt-1 text-[10px] text-faint">重置山势印记与香火，保留弟子、功法与部分仙玉。</p>
+        <p className="mt-2 text-xs text-faint">重置山势印记与香火，保留弟子、功法与部分仙玉。</p>
       </div>
 
       <div>
-        <h3 className="mb-2 text-[13px] font-medium text-ink">功法 · 道果 {formatNum(dao)}</h3>
+        <h3 className="mb-3 text-base font-semibold text-ink">功法 · 道果 {formatNum(dao)}</h3>
         {!lab && (
           <button
             type="button"
             disabled={jade < 20}
             onClick={() => useGame.getState().unlockLab()}
-            className="ink-btn mb-2 min-h-11 w-full py-2 text-xs"
+            className="ink-btn mb-3 min-h-12 w-full text-sm"
           >
             花费 20 仙玉解锁藏经阁
           </button>
         )}
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2.5">
           {SKILLS.map((sk) => {
             const lv = skills[sk.id] ?? 0;
             const cost = skillCost(sk.id, lv);
             const can = lab && lv < sk.max && dao >= cost;
             return (
-              <li key={sk.id} className="flex items-center gap-2 bg-paper-2 p-2">
+              <li key={sk.id} className="flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5">
                 <div className="min-w-0 flex-1">
-                  <div className="flex justify-between text-xs">
-                    <span>{sk.name}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="font-semibold">{sk.name}</span>
                     <span className="text-muted">
                       {lv}/{sk.max}
                     </span>
                   </div>
-                  <div className="text-[10px] text-faint">{sk.desc}</div>
+                  <div className="mt-0.5 text-sm text-faint">{sk.desc}</div>
                 </div>
                 <button
                   type="button"
                   disabled={!can}
                   onClick={() => useGame.getState().buySkill(sk.id)}
-                  className="ink-btn shrink-0 px-2 py-1 text-[11px]"
+                  className="ink-btn min-h-11 shrink-0 px-4 text-sm"
                 >
                   {lv >= sk.max ? "已满" : `${cost} 果`}
                 </button>
@@ -688,21 +688,21 @@ function DaoPanel() {
       </div>
 
       <div>
-        <h3 className="mb-2 text-[13px] font-medium text-ink">炼器</h3>
+        <h3 className="mb-3 text-base font-semibold text-ink">炼器</h3>
         {alchemy < 1 ? (
-          <p className="text-[11px] text-muted">建起瀑侧丹灶后方可炼制法宝。</p>
+          <p className="text-sm text-muted">建起瀑侧丹灶后方可炼制法宝。</p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2.5">
             {CRAFTS.map((c) => {
               const lv = crafts[c.id] ?? 0;
               const can = lv < c.max && herbs >= c.herbs && ore >= c.ore && jade >= c.jade;
               return (
-                <li key={c.id} className="flex items-center gap-2 bg-paper-2 p-2">
+                <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5">
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs">
+                    <div className="text-sm font-semibold">
                       {c.name} · {lv}/{c.max}
                     </div>
-                    <div className="text-[10px] text-faint">
+                    <div className="mt-0.5 text-sm text-faint">
                       {c.desc} · 草{c.herbs} 矿{c.ore} 玉{c.jade}
                     </div>
                   </div>
@@ -710,7 +710,7 @@ function DaoPanel() {
                     type="button"
                     disabled={!can}
                     onClick={() => useGame.getState().craft(c.id)}
-                    className="ink-btn shrink-0 px-2 py-1 text-[11px]"
+                    className="ink-btn min-h-11 shrink-0 px-5 text-sm"
                   >
                     炼
                   </button>
@@ -741,21 +741,21 @@ export function TitleScreen() {
   };
   return (
     <div
-      className="pointer-events-auto absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-t from-ink/60 via-ink/15 to-transparent px-6 text-center"
+      className="pointer-events-auto absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-t from-ink/60 via-ink/15 to-transparent px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-center"
       onClick={go}
     >
-      <div className="hud-box paper-grain w-full max-w-sm px-6 py-7">
-        <p className="title-line text-[11px] tracking-[0.55em] text-muted" style={{ animationDelay: "0ms" }}>
+      <div className="hud-box w-full max-w-sm px-8 py-10">
+        <p className="title-line text-sm tracking-[0.55em] text-muted" style={{ animationDelay: "0ms" }}>
           天劫未散
         </p>
         <h1
-          className="title-line mt-3 font-display text-5xl tracking-[0.28em] text-ink"
+          className="title-line mt-4 font-display text-6xl tracking-[0.22em] text-ink"
           style={{ animationDelay: "80ms" }}
           onClick={onTitleTap}
         >
           仙途点修
         </h1>
-        <div className="title-line mt-5 space-y-1.5 text-base leading-relaxed text-ink-2" style={{ animationDelay: "180ms" }}>
+        <div className="title-line mt-6 space-y-2 text-lg leading-relaxed text-ink-2" style={{ animationDelay: "180ms" }}>
           <p>你以凡躯立于劫云之下。</p>
           <p>开光劫云，立门开山，</p>
           <p>拜山投缘，香火伐劫。</p>
@@ -766,7 +766,7 @@ export function TitleScreen() {
             e.stopPropagation();
             go();
           }}
-          className="title-line ink-btn ink-btn-solid mt-7 min-h-12 min-w-44 px-8 py-3 text-base tracking-[0.3em]"
+          className="title-line ink-btn ink-btn-solid mt-8 min-h-14 min-w-48 px-10 text-lg tracking-[0.3em]"
           style={{ animationDelay: "320ms" }}
         >
           开启仙途
@@ -778,9 +778,9 @@ export function TitleScreen() {
 
 const TUTORIAL: { title: string; body: string; cls: string }[] = [
   { title: "", body: "", cls: "" },
-  { title: "指尖开光", body: "点山中任意处，给空峰开光。连点积「开光连势」。", cls: "left-3 top-[22%]" },
+  { title: "指尖开光", body: "点山中任意处，给空峰开光。连点积「开光连势」。", cls: "left-3 top-[24%]" },
   { title: "落下第一印", body: "滑山找到山麓香案虚印，点碑落「开山香案」。", cls: "left-[8%] top-[46%]" },
-  { title: "拜山投缘", body: "点底栏「拜山」，用缘玉请人上山。", cls: "inset-x-4 bottom-28" },
+  { title: "拜山投缘", body: "点底栏「拜山」，用缘玉请人上山。", cls: "inset-x-4 bottom-36" },
   { title: "香火自燃", body: "云阶亮起后山门会替你开光；金丹以上可御剑绕劫云。", cls: "left-3 top-[46%]" },
 ];
 
@@ -796,14 +796,14 @@ export function TutorialCoach() {
   const t = TUTORIAL[step];
   return (
     <div className={`pointer-events-none absolute z-30 ${t.cls}`}>
-      <div className="coach-card pointer-events-auto max-w-56 px-3 py-2.5">
-        <div className="font-display text-sm text-ink">{t.title}</div>
-        <p className="mt-1 text-[11px] leading-relaxed text-ink-2">{t.body}</p>
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-[10px] tabular-nums text-faint">{step} / 4</span>
+      <div className="coach-card pointer-events-auto max-w-64 px-4 py-3.5">
+        <div className="font-display text-base font-semibold text-ink">{t.title}</div>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{t.body}</p>
+        <div className="mt-2.5 flex items-center justify-between">
+          <span className="text-xs tabular-nums text-faint">{step} / 4</span>
           <button
             type="button"
-            className="text-[11px] text-seal"
+            className="min-h-11 px-3 text-sm font-medium text-seal"
             onClick={() => useGame.getState().skipTutorial()}
           >
             跳过
@@ -823,25 +823,25 @@ export function MenuSheet() {
   const wipe = useGame((s) => s.toasts.some((t) => t.text === "再点一次废弃存档"));
   if (!open) return null;
   return (
-    <div className="absolute inset-0 z-50 flex items-end justify-center bg-ink/35 px-3 pb-20">
+    <div className="absolute inset-0 z-50 flex items-end justify-center bg-ink/35 px-4 pb-[max(112px,env(safe-area-inset-bottom))]">
       <button type="button" className="absolute inset-0" aria-label="关闭" onClick={() => useGame.getState().setMenu(false)} />
-      <div className="hud-box paper-grain relative w-full max-w-sm p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg">宗主</h2>
-          <button type="button" className="min-h-10 px-2 text-sm tracking-widest text-muted" onClick={() => useGame.getState().setMenu(false)}>
+      <div className="hud-box relative w-full max-w-sm p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-display text-xl">宗主</h2>
+          <button type="button" className="min-h-11 px-3 text-base tracking-widest text-muted" onClick={() => useGame.getState().setMenu(false)}>
             关闭
           </button>
         </div>
-        <p className="mb-3 text-[11px] text-muted">
+        <p className="mb-4 text-sm text-muted">
           已归山 {prestigeCount} 次 · 道果 {formatNum(daoFruit)}
         </p>
-        <label className="flex min-h-11 items-center justify-between text-xs">
+        <label className="flex min-h-12 items-center justify-between text-base">
           音效
-          <input type="checkbox" checked={sfxOn} onChange={(e) => useGame.getState().setSfx(e.target.checked)} />
+          <input type="checkbox" checked={sfxOn} onChange={(e) => useGame.getState().setSfx(e.target.checked)} className="h-6 w-6" />
         </label>
-        <label className="flex min-h-11 items-center justify-between text-xs">
+        <label className="flex min-h-12 items-center justify-between text-base">
           震屏
-          <input type="checkbox" checked={shakeOn} onChange={(e) => useGame.getState().setShake(e.target.checked)} />
+          <input type="checkbox" checked={shakeOn} onChange={(e) => useGame.getState().setShake(e.target.checked)} className="h-6 w-6" />
         </label>
         <button
           type="button"
@@ -849,7 +849,7 @@ export function MenuSheet() {
             useGame.getState().setMenu(false);
             useGame.getState().setTab("dao");
           }}
-          className="ink-btn mt-2 min-h-11 w-full py-2 text-xs"
+          className="ink-btn mt-3 min-h-12 w-full text-base"
         >
           渡劫与功法
         </button>
@@ -860,7 +860,7 @@ export function MenuSheet() {
             if (wipe) g.resetSave();
             else g.pushToast("再点一次废弃存档");
           }}
-          className="ink-btn mt-2 min-h-11 w-full py-2 text-xs text-danger"
+          className="ink-btn mt-2.5 min-h-12 w-full text-base text-danger"
         >
           废弃存档
         </button>
@@ -872,9 +872,9 @@ export function MenuSheet() {
 export function Toasts() {
   const toasts = useGame((s) => s.toasts);
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-12 z-40 mx-auto flex max-w-sm flex-col items-center gap-1">
+    <div className="pointer-events-none absolute inset-x-0 top-[max(64px,env(safe-area-inset-top))] z-40 mx-auto flex max-w-sm flex-col items-center gap-1.5 px-4">
       {toasts.map((t) => (
-        <div key={t.id} className="toast-pop border border-ink/35 bg-paper/95 px-3 py-1.5 text-xs text-ink">
+        <div key={t.id} className="toast-pop rounded-xl border border-ink/15 bg-paper/95 px-4 py-2.5 text-sm text-ink shadow-lg">
           {t.text}
         </div>
       ))}
@@ -887,18 +887,18 @@ export function OfflineModal() {
   if (!gift) return null;
   return (
     <div
-      className="pointer-events-auto absolute inset-0 z-[60] flex items-center justify-center bg-ink/40 px-6"
+      className="pointer-events-auto absolute inset-0 z-[60] flex items-center justify-center bg-ink/40 px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]"
       onPointerUp={() => useGame.getState().dismissOffline()}
     >
-      <div className="hud-box w-full max-w-sm p-5 text-center" onPointerUp={(e) => e.stopPropagation()}>
-        <h2 className="font-display text-2xl">闭关归来</h2>
-        <p className="mt-2 text-[13px] text-muted">
+      <div className="hud-box w-full max-w-sm p-8 text-center" onPointerUp={(e) => e.stopPropagation()}>
+        <h2 className="font-display text-3xl">闭关归来</h2>
+        <p className="mt-3 text-base leading-relaxed text-muted">
           离山 {formatTime(gift.sec)}，山门代收香火 {formatNum(gift.qi)}
         </p>
         <button
           type="button"
           onPointerUp={() => useGame.getState().dismissOffline()}
-          className="ink-btn ink-btn-solid mt-4 min-h-11 w-full py-2"
+          className="ink-btn ink-btn-solid mt-6 min-h-12 w-full text-base"
         >
           收下
         </button>
@@ -929,24 +929,24 @@ export function DebugPanel() {
         type="button"
         aria-label="测试面板"
         onClick={() => setOpen(true)}
-        className="pointer-events-auto absolute bottom-24 right-3 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-seal/50 bg-ink/70 font-display text-lg text-paper shadow-lg"
+        className="pointer-events-auto absolute bottom-28 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-seal/50 bg-ink/70 font-display text-xl text-paper shadow-lg"
       >
         试
       </button>
       {open && (
         <div
-          className="pointer-events-auto absolute inset-0 z-[70] flex items-end justify-center bg-ink/45 px-4 pb-24"
+          className="pointer-events-auto absolute inset-0 z-[70] flex items-end justify-center bg-ink/45 px-4 pb-[max(112px,env(safe-area-inset-bottom))]"
           onClick={() => setOpen(false)}
         >
           <div
-            className="hud-box w-full max-w-sm p-4"
+            className="hud-box w-full max-w-sm p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg">测试外挂</h2>
+              <h2 className="font-display text-xl">测试外挂</h2>
               <button
                 type="button"
-                className="text-xs text-muted underline"
+                className="min-h-11 px-3 text-sm text-muted underline"
                 onClick={() => {
                   useGame.getState().setDebug(false);
                   setOpen(false);
@@ -955,13 +955,13 @@ export function DebugPanel() {
                 关闭测试模式
               </button>
             </div>
-            <p className="mt-1 text-[11px] text-muted">仅测试期使用,不影响正式存档结构</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <p className="mt-1.5 text-sm text-muted">仅测试期使用,不影响正式存档结构</p>
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
               {CHEATS.map((c) => (
                 <button
                   key={c.kind}
                   type="button"
-                  className="ink-btn min-h-11 px-3 py-2 text-sm"
+                  className="ink-btn min-h-12 px-3 text-base"
                   onClick={() => useGame.getState().cheat(c.kind)}
                 >
                   {c.label}
@@ -970,7 +970,7 @@ export function DebugPanel() {
             </div>
             <button
               type="button"
-              className="ink-btn ink-btn-solid mt-3 min-h-11 w-full py-2"
+              className="ink-btn ink-btn-solid mt-3.5 min-h-12 w-full text-base"
               onClick={() => setOpen(false)}
             >
               收起
