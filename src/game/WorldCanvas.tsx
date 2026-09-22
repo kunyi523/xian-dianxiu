@@ -702,8 +702,8 @@ export function WorldCanvas() {
         const p = slotXY(slot.nx, slot.ny, w, h, blit);
         const s = blit ? blit.dw * slot.hw : 56;
         if (lv <= 0) {
-          // 未解锁:淡色虚印地基(从无到有的起点),不再画废墟
-          if (painted) drawSiteFx(ctx, p.x, p.y, 0, time, def.id, s, false);
+          // 未解锁:淡色虚印地基(从无到有的起点),不再画废墟;纯矢量,不依赖贴图
+          drawSiteFx(ctx, p.x, p.y, 0, time, def.id, s, false);
           continue;
         }
         const fl = buildingFlash[def.id] ?? 0;

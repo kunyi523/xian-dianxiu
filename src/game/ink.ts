@@ -673,18 +673,8 @@ export function drawTribCloud(
     ctx.globalAlpha = 0.97;
     ctx.drawImage(fx, cx - fs / 2, cy - fs / 2 + s * 0.05, fs, fs);
     ctx.globalAlpha = 1;
-  } else {
-    // 缺图已打日志:保底保留一层淡墨核,避免云体完全消失
-    const core = radialCached(ctx, `core:${gk}`, cxq - sq * 0.05, cyq - sq * 0.04, 0, cxq, cyq, sq * 0.55, [
-      [0, `rgba(40,36,32,${0.82 + pq * 0.1})`],
-      [0.55, "rgba(28,25,20,0.55)"],
-      [1, "rgba(28,25,20,0)"],
-    ]);
-    ctx.fillStyle = core;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy + s * 0.02, s * 0.52, s * 0.28, -0.06, 0, Math.PI * 2);
-    ctx.fill();
   }
+  // 缺图只打日志(见 fxImg):不绘制矢量主体,不做 fallback
   // 软朱砂印心（非硬红点）
   const sealR = sq * (0.22 + pq * 0.12);
   const seal = radialCached(
@@ -849,8 +839,8 @@ function drawQiThreads(
   ctx.globalAlpha = 1;
 }
 
-/** 仙气六帧:建筑后方氛围 overlay,慢循环,低透明,不遮建筑。 */
-function drawXianqiBehind(
+/** 仙气六帧:建筑绘制之后的低透明 overlay,慢循环,不遮建筑主体。 */
+function drawXianqiOverlay(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -859,11 +849,37 @@ function drawXianqiBehind(
 ) {
   const img = fxImg("xianqi", Math.floor(t * 3) % 6 + 1);
   if (!img) return; // 缺图已打日志,不绘制
-  const size = s * 2.4;
+  const size = s * 2.2;
   ctx.save();
-  ctx.globalAlpha = 0.38;
-  // 建筑中心约在 (x, y-0.9s):脚底锚点 y 上方
-  ctx.drawImage(img, x - size / 2, y - 0.9 * s - size / 2, size, size);
+  ctx.globalAlpha = 0.22;
+  // 建筑中心约在 (x, y-0.9s):overlay 中心略上移,不压建筑主体
+  ctx.drawImage(img, x - size / 2, y - 1.05 * s - size / 2, size, size);
+  ctx.restore();
+}
+
+/** 未解锁槽位:淡色虚印地基。细虚线椭圆地基轮廓,低透明,不抢戏。 */
+function drawGhostFoundation(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  s: number,
+  t: number,
+) {
+  const breath = 0.2 + 0.07 * Math.sin(t * 1.15 + x * 0.01);
+  ctx.save();
+  ctx.strokeStyle = "#6b6455";
+  ctx.lineWidth = Math.max(1, s * 0.022);
+  ctx.setLineDash([s * 0.085, s * 0.065]);
+  // 外圈:地基轮廓,与建筑 footprint 对齐,脚底锚定 (x, y)
+  ctx.globalAlpha = breath;
+  ctx.beginPath();
+  ctx.ellipse(x, y, s * 0.62, s * 0.2, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  // 内圈:示意"可建造",更淡
+  ctx.globalAlpha = breath * 0.65;
+  ctx.beginPath();
+  ctx.ellipse(x, y, s * 0.32, s * 0.105, 0, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -883,9 +899,15 @@ export function drawSiteFx(
   ctx.save();
   // 第2层收口:8 栋全部走分级 PNG 精灵;hall 只有 t1/t2,逻辑 tier 2/3/4 显式用 t2
   if (id) {
-    // 仙气帧:后方氛围 overlay,已解锁站点才有
-    if (tier >= 1) drawXianqiBehind(ctx, x, y, s, t);
+    if (tier < 1) {
+      // 未解锁:淡色虚印地基(从无到有的起点),不再画废墟
+      drawGhostFoundation(ctx, x, y, s, t);
+      ctx.restore();
+      return;
+    }
     drawSpriteBuilding(ctx, id, x, y, s, tier);
+    // 仙气:建筑绘制之后,低透明 overlay,不遮建筑主体
+    drawXianqiOverlay(ctx, x, y, s, t);
     ctx.restore();
     return;
   }
