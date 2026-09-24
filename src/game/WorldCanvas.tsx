@@ -222,7 +222,7 @@ export function WorldCanvas() {
     const mountain = new Image();
     mountain.crossOrigin = "anonymous";
     // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
-    mountain.src = assetUrl("bg/bg_panorama.png?v=4");
+    mountain.src = assetUrl("bg/bg_panorama.jpg?v=5");
     let mountainOk = false;
     let blit: Blit | null = null;
     // Offscreen cache: avoid drawImage-ing the ~0.9MB JPG every rAF
