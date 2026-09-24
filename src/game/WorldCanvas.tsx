@@ -237,14 +237,14 @@ export function WorldCanvas() {
     const drag = { on: false, moved: false, x: 0, y: 0 };
 
     const LANDINGS = [
-      { nx: 0.44, ny: 0.62 },
-      { nx: 0.52, ny: 0.64 },
-      { nx: 0.4, ny: 0.66 },
-      { nx: 0.55, ny: 0.6 },
-      { nx: 0.36, ny: 0.7 },
-      { nx: 0.6, ny: 0.68 },
-      { nx: 0.48, ny: 0.7 },
-      { nx: 0.3, ny: 0.72 },
+      { nx: 0.3, ny: 0.65 },
+      { nx: 0.6, ny: 0.65 },
+      { nx: 0.2, ny: 0.69 },
+      { nx: 0.7, ny: 0.69 },
+      { nx: 0.42, ny: 0.71 },
+      { nx: 0.55, ny: 0.71 },
+      { nx: 0.35, ny: 0.74 },
+      { nx: 0.65, ny: 0.74 },
     ];
 
     /** 单张空山底图:尺寸变才重建离屏 */
