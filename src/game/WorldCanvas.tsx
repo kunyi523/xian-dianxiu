@@ -3,7 +3,6 @@ import { BUILDINGS, DISCIPLES } from "./data";
 import {
   BUILDING_SLOTS,
   backdropBlit,
-  buildingTier,
   buildingsInBand,
   drawBandMist,
   drawCraneFly,
@@ -15,7 +14,6 @@ import {
   drawProceduralBuilding,
   drawSiteFx,
   drawSky,
-  drawStamp,
   drawSwordRider,
   drawTribCloud,
   drawUpgradeBurst,
@@ -58,38 +56,21 @@ const SEAL_CHARS: Record<string, string> = {
   mirror: "镜",
   alchemy: "丹",
 };
-// 精灵图内可视内容顶部(占 1600 图高比例,实测 21 张):
-// 标签按可视顶部定位,矮建筑不再把印章顶到天上
-const SPRITE_CONTENT_TOP: Record<string, number> = {
-  alchemy_t1: 116 / 1600, alchemy_t2: 110 / 1600, alchemy_t3: 102 / 1600,
-  array_t1: 855 / 1600, array_t2: 802 / 1600, array_t3: 734 / 1600,
-  hall_t1: 504 / 1600, hall_t2: 680 / 1600,
-  house_t1: 1012 / 1600, house_t2: 1011 / 1600, house_t3: 1007 / 1600,
-  mine_t1: 812 / 1600, mine_t2: 806 / 1600, mine_t3: 738 / 1600,
-  mirror_t1: 943 / 1600, mirror_t2: 755 / 1600, mirror_t3: 746 / 1600,
-  sword_t1: 667 / 1600, sword_t2: 565 / 1600, sword_t3: 481 / 1600,
-  tower_t1: 344 / 1600, tower_t2: 63 / 1600, tower_t3: 21 / 1600,
-};
 function drawBuildingLabel(
   ctx: CanvasRenderingContext2D,
   id: string,
   name: string,
   x: number,
   y: number,
-  s: number,
   time: number,
-  t: number,
 ) {
   const seal = SEAL_CHARS[id];
   if (!seal) return;
-  // 标签按精灵图"可视内容顶部"定位,不按 1600 整图顶算:
-  // 矮建筑图里大片透明留白,按图顶算印章会飘到天上、压住上一排建筑
-  const contentTop = SPRITE_CONTENT_TOP[`${id}_t${t}`] ?? 0;
-  const topY = y - (1560 / 1600) * s * 2 + contentTop * s * 2;
+  // 印章落在建筑底座中心(原灰色圆圈的位置),名号缀在印章下方,随建筑一起平移
   const bob = Math.sin(time * 1.3 + x * 0.04) * 1.5;
   const cx = x;
-  const sealY = topY - 36 + bob;
-  const nameY = topY - 14 + bob;
+  const sealY = y - 6 + bob;
+  const nameY = y + 20 + bob;
   ctx.save();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -768,9 +749,7 @@ export function WorldCanvas() {
         if (painted) drawSiteFx(ctx, p.x, p.y, lv, time, def.id, s, false);
         else drawProceduralBuilding(ctx, def, p.x, p.y, lv, time);
         ctx.restore();
-        // 标签用的精灵分级与 drawSpriteBuilding 内一致(hall 只有 t1/t2)
-        const spriteT = Math.min(buildingTier(lv), def.id === "hall" ? 2 : 3);
-        drawBuildingLabel(ctx, def.id, def.name, p.x, p.y, s, time, spriteT);
+        drawBuildingLabel(ctx, def.id, def.name, p.x, p.y, time);
       }
     };
 
@@ -1142,9 +1121,7 @@ export function WorldCanvas() {
           ctx.arc(p.x, p.y, 18 + Math.sin(time * 4) * 2, 0, Math.PI * 2);
           ctx.stroke();
         }
-        drawStamp(ctx, p.x, p.y, mark.id, mark.owned, mark.locked);
       }
-
       const shownGuests = guests.slice(0, 8);
       for (const g of shownGuests) {
         const land = slotXY(g.nx, g.ny, w, h, blit);
