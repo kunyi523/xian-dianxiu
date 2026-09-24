@@ -3,6 +3,7 @@ import { BUILDINGS, DISCIPLES } from "./data";
 import {
   BUILDING_SLOTS,
   backdropBlit,
+  buildingTier,
   buildingsInBand,
   drawBandMist,
   drawCraneFly,
@@ -57,6 +58,18 @@ const SEAL_CHARS: Record<string, string> = {
   mirror: "镜",
   alchemy: "丹",
 };
+// 精灵图内可视内容顶部(占 1600 图高比例,实测 21 张):
+// 标签按可视顶部定位,矮建筑不再把印章顶到天上
+const SPRITE_CONTENT_TOP: Record<string, number> = {
+  alchemy_t1: 116 / 1600, alchemy_t2: 110 / 1600, alchemy_t3: 102 / 1600,
+  array_t1: 855 / 1600, array_t2: 802 / 1600, array_t3: 734 / 1600,
+  hall_t1: 504 / 1600, hall_t2: 680 / 1600,
+  house_t1: 1012 / 1600, house_t2: 1011 / 1600, house_t3: 1007 / 1600,
+  mine_t1: 812 / 1600, mine_t2: 806 / 1600, mine_t3: 738 / 1600,
+  mirror_t1: 943 / 1600, mirror_t2: 755 / 1600, mirror_t3: 746 / 1600,
+  sword_t1: 667 / 1600, sword_t2: 565 / 1600, sword_t3: 481 / 1600,
+  tower_t1: 344 / 1600, tower_t2: 63 / 1600, tower_t3: 21 / 1600,
+};
 function drawBuildingLabel(
   ctx: CanvasRenderingContext2D,
   id: string,
@@ -65,11 +78,14 @@ function drawBuildingLabel(
   y: number,
   s: number,
   time: number,
+  t: number,
 ) {
   const seal = SEAL_CHARS[id];
   if (!seal) return;
-  // 与 drawSpriteBuilding 同锚点:图高 s*2,脚底距顶 1560/1600
-  const topY = y - (1560 / 1600) * s * 2;
+  // 标签按精灵图"可视内容顶部"定位,不按 1600 整图顶算:
+  // 矮建筑图里大片透明留白,按图顶算印章会飘到天上、压住上一排建筑
+  const contentTop = SPRITE_CONTENT_TOP[`${id}_t${t}`] ?? 0;
+  const topY = y - (1560 / 1600) * s * 2 + contentTop * s * 2;
   const bob = Math.sin(time * 1.3 + x * 0.04) * 1.5;
   const cx = x;
   const sealY = topY - 36 + bob;
@@ -752,7 +768,9 @@ export function WorldCanvas() {
         if (painted) drawSiteFx(ctx, p.x, p.y, lv, time, def.id, s, false);
         else drawProceduralBuilding(ctx, def, p.x, p.y, lv, time);
         ctx.restore();
-        drawBuildingLabel(ctx, def.id, def.name, p.x, p.y, s, time);
+        // 标签用的精灵分级与 drawSpriteBuilding 内一致(hall 只有 t1/t2)
+        const spriteT = Math.min(buildingTier(lv), def.id === "hall" ? 2 : 3);
+        drawBuildingLabel(ctx, def.id, def.name, p.x, p.y, s, time, spriteT);
       }
     };
 
