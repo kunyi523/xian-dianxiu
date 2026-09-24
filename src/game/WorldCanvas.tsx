@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { BUILDINGS, DISCIPLES } from "./data";
 import {
   BUILDING_SLOTS,
-  backdropBlit,
   buildingsInBand,
   drawBandMist,
   drawCraneFly,
@@ -26,6 +25,8 @@ import {
   slotXY,
   stampStates,
   tribCenter,
+  TRIB,
+  WORLD_K,
   type Blit,
   setFxAssetBase,
 } from "./ink";
@@ -221,7 +222,7 @@ export function WorldCanvas() {
     const mountain = new Image();
     mountain.crossOrigin = "anonymous";
     // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
-    mountain.src = assetUrl("bg/bg_shanshui.png?v=2");
+    mountain.src = assetUrl("bg/bg_panorama.png?v=1");
     let mountainOk = false;
     let blit: Blit | null = null;
     // Offscreen cache: avoid drawImage-ing the ~0.9MB JPG every rAF
@@ -233,18 +234,26 @@ export function WorldCanvas() {
       mountainCacheKey = "";
     };
 
-    // 拖拽只做点按防误触(>12px 不触发点按);世界坐标=屏幕坐标,不再平移背景
-    const drag = { on: false, moved: false, x: 0, y: 0 };
+    // 横滑镜头:pan 为世界横向偏移(px),-1 表示未初始化(首次对准中央劫云/主建筑/瀑布)
+    const cam = { pan: -1 };
+    const clampPan = (w: number) => {
+      const worldW = w * WORLD_K;
+      if (cam.pan < 0) cam.pan = worldW * TRIB.nx - w / 2;
+      cam.pan = Math.max(0, Math.min(worldW - w, cam.pan));
+    };
+
+    // 拖拽:>12px 视为滑动(横向平移镜头),否则为点按
+    const drag = { on: false, moved: false, x: 0, y: 0, lx: 0 };
 
     const LANDINGS = [
-      { nx: 0.3, ny: 0.65 },
-      { nx: 0.6, ny: 0.65 },
-      { nx: 0.2, ny: 0.69 },
-      { nx: 0.7, ny: 0.69 },
-      { nx: 0.42, ny: 0.71 },
-      { nx: 0.55, ny: 0.71 },
-      { nx: 0.35, ny: 0.74 },
-      { nx: 0.65, ny: 0.74 },
+      { nx: 0.2, ny: 0.66 },
+      { nx: 0.8, ny: 0.66 },
+      { nx: 0.35, ny: 0.7 },
+      { nx: 0.65, ny: 0.7 },
+      { nx: 0.45, ny: 0.72 },
+      { nx: 0.55, ny: 0.72 },
+      { nx: 0.3, ny: 0.74 },
+      { nx: 0.7, ny: 0.74 },
     ];
 
     /** 单张空山底图:尺寸变才重建离屏 */
@@ -268,20 +277,35 @@ export function WorldCanvas() {
       return oc;
     };
 
-    /** 背景只做装饰:fit-width 铺满高屏;世界坐标恒为屏幕坐标,布局不挤。 */
+    /** 世界比屏宽(WORLD_K 倍):底图 cover 世界矩形,镜头随 pan 平移 */
     const syncBlit = (w: number, h: number) => {
+      const worldW = w * WORLD_K;
+      clampPan(w);
+      // 世界坐标映射:blit.dx = -pan,后续所有 slotXY/tribCenter/pathPoint 自动跟随镜头
+      blit = { dx: -cam.pan, dy: 0, dw: worldW, dh: h };
       const base = mountainOk && mountain.naturalWidth ? mountain : null;
-      // 世界坐标 = 屏幕坐标(背景缺失时 slotXY 本来也回退到这一套)
-      blit = { dx: 0, dy: 0, dw: w, dh: h };
       if (!base || !base.naturalWidth) return false;
-      const bd = backdropBlit(base.naturalWidth, base.naturalHeight, w, h);
+      const ir = base.naturalWidth / base.naturalHeight;
+      const wr = worldW / h;
+      let dw: number, dh: number, dx: number, dy: number;
+      if (ir > wr) {
+        dh = h;
+        dw = dh * ir;
+        dx = -cam.pan - (dw - worldW) / 2;
+        dy = 0;
+      } else {
+        dw = worldW;
+        dh = dw / ir;
+        dx = -cam.pan;
+        dy = (h - dh) / 2;
+      }
       const dpr = canvas.width / Math.max(1, w);
-      const cache = ensureMountainCache(bd.dw, bd.dh, dpr);
+      const cache = ensureMountainCache(dw, dh, dpr);
       if (cache) {
         // Cache is already device-pixel sized; transform scales CSS→device ≈ 1:1
-        ctx.drawImage(cache, bd.dx, bd.dy, bd.dw, bd.dh);
+        ctx.drawImage(cache, dx, dy, dw, dh);
       } else {
-        ctx.drawImage(base, bd.dx, bd.dy, bd.dw, bd.dh);
+        ctx.drawImage(base, dx, dy, dw, dh);
       }
       return true;
     };
@@ -683,12 +707,22 @@ export function WorldCanvas() {
       drag.moved = false;
       drag.x = ev.clientX;
       drag.y = ev.clientY;
+      drag.lx = ev.clientX;
     };
     const onPointerMove = (ev: PointerEvent) => {
       if (!drag.on) return;
       const dx = ev.clientX - drag.x;
       const dy = ev.clientY - drag.y;
-      if (Math.abs(dx) > 12 || Math.abs(dy) > 12) drag.moved = true;
+      if (!drag.moved && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
+        drag.moved = true;
+        drag.lx = ev.clientX;
+      }
+      if (drag.moved) {
+        // 横向滑动镜头;纵向不跟手
+        const worldW = cssW * WORLD_K;
+        cam.pan = Math.max(0, Math.min(worldW - cssW, cam.pan - (ev.clientX - drag.lx)));
+        drag.lx = ev.clientX;
+      }
     };
     const onPointerUp = (ev: PointerEvent) => {
       if (!drag.on) return;
@@ -1086,7 +1120,7 @@ export function WorldCanvas() {
         drawPeaks(ctx, w, h, 0);
       }
       // 山间石径：始终绘制，弟子行走的路看得见
-      drawPath(ctx, w, h);
+      drawPath(ctx, w, h, blit);
       drawTribCloud(ctx, cx, cy, R * (1.18 + vortexPulse * 0.07), vortexPulse, time);
 
       paintBuildings(0, st, painted);

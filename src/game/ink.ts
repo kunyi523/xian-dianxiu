@@ -205,6 +205,9 @@ export const SHORT_NAME: Record<string, string> = {
   alchemy: "丹",
 };
 
+/** 世界宽度 = 屏幕宽 × WORLD_K,可左右滑动;中央(劫云/主建筑/瀑布)为开屏镜头 */
+export const WORLD_K = 2.4;
+
 export type Peak = {
   id: string;
   nx: number;
@@ -216,26 +219,26 @@ export type Peak = {
 };
 
 export const PEAKS: Peak[] = [
-  // 2026-09-24 拉宽版:建筑实际绘制宽 = 2×hw×屏宽,此前 hw 偏大致互相挤叠。
-  // 本轮 hw 统一收小约 35-40%,横向铺满 0.08-0.88,纵向三带拉开(上 0.42-0.45 / 中 0.575-0.61 / 下 0.74-0.77)。
+  // 2026-09-24 横滑版:nx 为世界坐标(0-1 铺满 worldW);建筑实际绘制宽 = 2×hw×worldW,
+  // hw/hh 按 worldW(=2.4 屏宽)折算,屏上观感与上一版一致。左3栋/右4栋,中央只留劫云+开山香案+瀑布。
   // band0 近劫 · band1 山腰 · band2 山麓
   { id: "main", nx: 0.48, ny: 0.18, hw: 0.16, hh: 0.2, band: 0, z: 0 },
-  // 右上孤峰峰顶 → 雷骨塔
-  { id: "tower", nx: 0.82, ny: 0.42, hw: 0.06, hh: 0.115, band: 0, z: 1 },
-  // 中峰近劫云下 → 望劫镜
-  { id: "mirror", nx: 0.38, ny: 0.45, hw: 0.075, hh: 0.085, band: 0, z: 2 },
+  // 右上孤峰 → 雷骨塔
+  { id: "tower", nx: 0.885, ny: 0.42, hw: 0.025, hh: 0.048, band: 0, z: 1 },
+  // 右中峰 → 望劫镜
+  { id: "mirror", nx: 0.72, ny: 0.475, hw: 0.031, hh: 0.036, band: 0, z: 2 },
   // 左山腰 → 瀑侧丹灶
-  { id: "alchemy", nx: 0.1, ny: 0.575, hw: 0.06, hh: 0.08, band: 1, z: 0 },
-  // 中左山腰台地 → 镇峰残纹
-  { id: "array", nx: 0.33, ny: 0.61, hw: 0.085, hh: 0.09, band: 1, z: 1 },
+  { id: "alchemy", nx: 0.1, ny: 0.575, hw: 0.025, hh: 0.033, band: 1, z: 0 },
+  // 左中山腰台地 → 镇峰残纹
+  { id: "array", nx: 0.235, ny: 0.545, hw: 0.036, hh: 0.038, band: 1, z: 1 },
   // 右山腰 → 龙脉口（洞府入口）
-  { id: "mine", nx: 0.86, ny: 0.575, hw: 0.065, hh: 0.09, band: 1, z: 2 },
+  { id: "mine", nx: 0.875, ny: 0.615, hw: 0.027, hh: 0.038, band: 1, z: 2 },
   // 左近山丘 → 云阶茅舍
-  { id: "house", nx: 0.12, ny: 0.74, hw: 0.085, hh: 0.08, band: 2, z: 0 },
-  // 正中近山丘 → 开山香案
-  { id: "hall", nx: 0.48, ny: 0.77, hw: 0.1, hh: 0.11, band: 2, z: 1 },
+  { id: "house", nx: 0.09, ny: 0.75, hw: 0.036, hh: 0.033, band: 2, z: 0 },
+  // 中央主建筑 → 开山香案（瀑布上方）
+  { id: "hall", nx: 0.6, ny: 0.665, hw: 0.042, hh: 0.046, band: 2, z: 1 },
   // 右近山丘 → 悬剑冢
-  { id: "sword", nx: 0.8, ny: 0.74, hw: 0.07, hh: 0.095, band: 2, z: 2 },
+  { id: "sword", nx: 0.745, ny: 0.735, hw: 0.029, hh: 0.04, band: 2, z: 2 },
 ];
 
 export const BUILDING_SLOTS: Record<string, { nx: number; ny: number; z: number; band: 0 | 1 | 2; hw: number; hh: number }> =
@@ -243,67 +246,55 @@ export const BUILDING_SLOTS: Record<string, { nx: number; ny: number; z: number;
     PEAKS.filter((p) => p.id !== "main").map((p) => [p.id, { nx: p.nx, ny: p.ny, z: p.z, band: p.band, hw: p.hw, hh: p.hh }]),
   );
 
-/** 拜山多径：贴拉宽后的建筑落点；山麓环避开底部湖面 */
+/** 拜山多径：世界坐标(nx 0-1 铺满 worldW)；左山环 / 右山环 / 中央朝圣 */
 export const MOUNTAIN_PATHS: { nx: number; ny: number }[][] = [
-  // 0 · 山麓环 — 近山丘一带（茅舍 0.12/0.74 ↔ 香案 0.48/0.77 ↔ 剑冢 0.80/0.74）
+  // 0 · 左山环 — 丹灶 0.10/0.575 ↔ 残纹 0.235/0.545 ↔ 茅舍 0.09/0.75
   [
-    { nx: 0.1, ny: 0.78 },
-    { nx: 0.18, ny: 0.76 },
-    { nx: 0.28, ny: 0.75 },
-    { nx: 0.38, ny: 0.75 },
-    { nx: 0.48, ny: 0.755 },
-    { nx: 0.58, ny: 0.75 },
-    { nx: 0.68, ny: 0.745 },
-    { nx: 0.78, ny: 0.745 },
-    { nx: 0.84, ny: 0.76 },
-    { nx: 0.78, ny: 0.78 },
-    { nx: 0.66, ny: 0.79 },
-    { nx: 0.52, ny: 0.795 },
-    { nx: 0.38, ny: 0.79 },
-    { nx: 0.24, ny: 0.785 },
-    { nx: 0.14, ny: 0.78 },
-    { nx: 0.1, ny: 0.78 },
+    { nx: 0.06, ny: 0.6 },
+    { nx: 0.1, ny: 0.575 },
+    { nx: 0.16, ny: 0.56 },
+    { nx: 0.235, ny: 0.55 },
+    { nx: 0.28, ny: 0.58 },
+    { nx: 0.24, ny: 0.63 },
+    { nx: 0.17, ny: 0.68 },
+    { nx: 0.1, ny: 0.72 },
+    { nx: 0.09, ny: 0.75 },
+    { nx: 0.06, ny: 0.72 },
+    { nx: 0.05, ny: 0.66 },
+    { nx: 0.06, ny: 0.6 },
   ],
-  // 1 · 山腰折 — 丹灶 0.10/0.575 → 残纹 0.33/0.61 → 龙脉口 0.86/0.575
+  // 1 · 右山环 — 望劫镜 0.72/0.475 → 雷骨塔 0.885/0.42 → 龙脉口 0.875/0.615 → 悬剑冢 0.745/0.735
   [
-    { nx: 0.08, ny: 0.595 },
-    { nx: 0.14, ny: 0.58 },
-    { nx: 0.22, ny: 0.58 },
-    { nx: 0.3, ny: 0.59 },
-    { nx: 0.38, ny: 0.6 },
-    { nx: 0.48, ny: 0.6 },
-    { nx: 0.58, ny: 0.595 },
-    { nx: 0.68, ny: 0.59 },
-    { nx: 0.78, ny: 0.585 },
-    { nx: 0.86, ny: 0.585 },
-    { nx: 0.88, ny: 0.61 },
-    { nx: 0.8, ny: 0.625 },
-    { nx: 0.68, ny: 0.63 },
-    { nx: 0.54, ny: 0.635 },
-    { nx: 0.4, ny: 0.635 },
-    { nx: 0.26, ny: 0.625 },
-    { nx: 0.14, ny: 0.61 },
-    { nx: 0.08, ny: 0.595 },
+    { nx: 0.68, ny: 0.5 },
+    { nx: 0.72, ny: 0.475 },
+    { nx: 0.78, ny: 0.45 },
+    { nx: 0.885, ny: 0.43 },
+    { nx: 0.92, ny: 0.48 },
+    { nx: 0.9, ny: 0.56 },
+    { nx: 0.875, ny: 0.615 },
+    { nx: 0.84, ny: 0.66 },
+    { nx: 0.78, ny: 0.7 },
+    { nx: 0.745, ny: 0.735 },
+    { nx: 0.7, ny: 0.7 },
+    { nx: 0.68, ny: 0.62 },
+    { nx: 0.67, ny: 0.55 },
+    { nx: 0.68, ny: 0.5 },
   ],
-  // 2 · 朝圣上峰 — 香案 0.48/0.77 → 望劫镜 0.38/0.45 → 雷骨塔 0.82/0.42 → 回折
+  // 2 · 中央朝圣 — 香案 0.60/0.665 直上劫云 0.60/0.12
   [
-    { nx: 0.48, ny: 0.71 },
-    { nx: 0.47, ny: 0.65 },
-    { nx: 0.45, ny: 0.59 },
-    { nx: 0.42, ny: 0.53 },
-    { nx: 0.4, ny: 0.48 },
-    { nx: 0.38, ny: 0.455 },
-    { nx: 0.46, ny: 0.445 },
-    { nx: 0.56, ny: 0.435 },
-    { nx: 0.66, ny: 0.43 },
-    { nx: 0.76, ny: 0.425 },
-    { nx: 0.82, ny: 0.43 },
-    { nx: 0.76, ny: 0.455 },
-    { nx: 0.66, ny: 0.495 },
-    { nx: 0.58, ny: 0.545 },
-    { nx: 0.52, ny: 0.61 },
-    { nx: 0.5, ny: 0.67 },
-    { nx: 0.48, ny: 0.71 },
+    { nx: 0.6, ny: 0.63 },
+    { nx: 0.6, ny: 0.6 },
+    { nx: 0.6, ny: 0.52 },
+    { nx: 0.6, ny: 0.44 },
+    { nx: 0.6, ny: 0.36 },
+    { nx: 0.6, ny: 0.28 },
+    { nx: 0.6, ny: 0.2 },
+    { nx: 0.6, ny: 0.16 },
+    { nx: 0.64, ny: 0.24 },
+    { nx: 0.65, ny: 0.34 },
+    { nx: 0.64, ny: 0.46 },
+    { nx: 0.62, ny: 0.58 },
+    { nx: 0.6, ny: 0.63 },
   ],
 ];
 
@@ -311,7 +302,7 @@ export const MOUNTAIN_PATH = MOUNTAIN_PATHS[0];
 
 export const PATH_COUNT = MOUNTAIN_PATHS.length;
 
-export const TRIB = { nx: 0.48, ny: 0.11 };
+export const TRIB = { nx: 0.6, ny: 0.12 };
 
 export type Blit = { dx: number; dy: number; dw: number; dh: number };
 
@@ -533,16 +524,15 @@ export function drawWaterfall(ctx: CanvasRenderingContext2D, w: number, h: numbe
   ctx.restore();
 }
 
-export function drawPath(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  // 三条淡雅石径：山麓最实，朝圣最淡；双色叠画，有石板路感
+export function drawPath(ctx: CanvasRenderingContext2D, w: number, h: number, blit: Blit | null) {
+  // 三条淡雅石径：左山环最实，朝圣最淡；双色叠画，有石板路感；随镜头平移
   MOUNTAIN_PATHS.forEach((path, pi) => {
     const trace = () => {
       ctx.beginPath();
       path.forEach((p, i) => {
-        const x = p.nx * w;
-        const y = p.ny * h;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        const s = slotXY(p.nx, p.ny, w, h, blit);
+        if (i === 0) ctx.moveTo(s.x, s.y);
+        else ctx.lineTo(s.x, s.y);
       });
     };
     ctx.lineJoin = "round";
