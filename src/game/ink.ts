@@ -76,6 +76,27 @@ export function buildingImg(id: string, tier: number): HTMLImageElement | null {
   return img.complete && img.naturalWidth > 0 ? img : null;
 }
 
+/** 取融合建筑图:sprites/fused/{id}_t{n}.png,建筑+水墨山石+雾已烘焙一体,直接绘制。 */
+const fusedImgCache = new Map<string, HTMLImageElement>();
+const fusedImgMissing = new Set<string>();
+export function buildingFusedImg(id: string, tier: number): HTMLImageElement | null {
+  const t = Math.min(tier, id === "hall" ? 2 : 3);
+  const key = `fused/${id}_t${t}`;
+  let img = fusedImgCache.get(key);
+  if (!img) {
+    img = new Image();
+    img.src = `${inkAssetBase}/${key}.png`;
+    img.onerror = () => {
+      if (!fusedImgMissing.has(key)) {
+        fusedImgMissing.add(key);
+        console.warn(`[ink] 融合建筑图缺失:${key}.png`);
+      }
+    };
+    fusedImgCache.set(key, img);
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
 /* ---------- 特效 PNG(逐帧 {kind}_f{n})资源 ---------- */
 let fxAssetBase = "/";
 export function setFxAssetBase(b: string) {
@@ -162,25 +183,14 @@ function drawSpriteBuilding(
   tier: number,
 ) {
   if (tier < 1) return; // 未解锁不上图
-  // 只有 t1-t3;t4 暂用 t3。hall 只有 t1/t2,逻辑 tier 2/3/4 显式用 t2,不请求 hall_t3
-  const t = Math.min(tier, id === "hall" ? 2 : 3);
-  const img = buildingImg(id, t);
+  // 融合图:建筑+水墨山石+雾已烘焙一体,直接绘制,不再做洇墨/罩染
+  const img = buildingFusedImg(id, tier);
   if (!img) return; // 缺图已打日志,不绘制
   const size = s * 2; // 逻辑格:与槽位宽度对齐,运行时只做统一 scale
-  const feetFromTop = (1560 / 1600) * size; // 脚底在图内距顶 1560px 处
+  const feetFromTop = 0.9 * size; // 融合图山石底部约在 90% 高度处
   const dx = x - size / 2;
   const dy = y - feetFromTop;
-  // 洇墨边:模糊本体重影垫底,轮廓如墨洇入纸,不再是硬切贴纸
-  ctx.save();
-  ctx.globalAlpha = 0.3;
-  ctx.filter = "blur(3px) saturate(0.7) brightness(1.05)";
   ctx.drawImage(img, dx, dy, size, size);
-  ctx.restore();
-  // 罩染:收饱和度提亮,建筑和背景山用同一套青灰墨色呼吸
-  ctx.save();
-  ctx.filter = "saturate(0.7) brightness(1.05)";
-  ctx.drawImage(img, dx, dy, size, size);
-  ctx.restore();
 }export function perkLine(id: string, lv: number): string {
   if (lv <= 0) return BUILDINGS.find((b) => b.id === id)?.perk ?? "";
   if (id === "hall") return `香火 全山山息 +${(lv * 0.5).toFixed(1)}%`;
@@ -1182,7 +1192,9 @@ export function drawSiteFx(
   band: 0 | 1 | 2 = 2,
 ) {
   const tier = ruined ? 0 : buildingTier(lv);
-  const s = Math.max(28, scale);
+  // 升级变大:基础整体 +30%,tier1 0.85 / tier2 1.0 / tier3 1.15 / tier4 1.3
+  const TIER_SCALE = [1, 0.85, 1.0, 1.15, 1.3];
+  const s = Math.max(28, scale * TIER_SCALE[tier]);
   const breath = 0.5 + 0.5 * Math.sin(t * 1.15 + x * 0.01);
   ctx.save();
   // 第2层收口:8 栋全部走分级 PNG 精灵;hall 只有 t1/t2,逻辑 tier 2/3/4 显式用 t2
@@ -1193,12 +1205,8 @@ export function drawSiteFx(
       ctx.restore();
       return;
     }
-    drawBackHill(ctx, x, y, s, id);
-    drawGroundShadow(ctx, x, y, s);
+    // 融合图已自带山石雾一体,不再画实时融山特效(靠山/阴影/雾/空气透视)
     drawSpriteBuilding(ctx, id, x, y, s, tier);
-    // 空气透视:远建筑罩一层淡青灰,和背景山呼吸同一种空气;band0 最远最浓
-    drawAirHaze(ctx, x, y, s, band);
-    drawBaseMist(ctx, x, y, s);
     // 仙气:建筑绘制之后,低透明 overlay,不遮建筑主体
     drawXianqiOverlay(ctx, x, y, s, t);
     // 前景压脚已移除:和新青绿横卷背景冲突,底座出现蓝灰色"爪状"笔触;建筑自带水墨山石底座,无需再压
@@ -1443,7 +1451,7 @@ export function drawProceduralBuilding(
   lv: number,
   t: number,
 ) {
-  drawSiteFx(ctx, x, y, lv, t, def.id, 48, lv <= 0);
+  drawSiteFx(ctx, x, y, lv, t, def.id, 62, lv <= 0);
 }
 
 export function drawRuinVeil(ctx: CanvasRenderingContext2D, x: number, y: number, rw: number, rh: number) {
