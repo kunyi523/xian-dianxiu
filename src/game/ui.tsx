@@ -313,7 +313,7 @@ function SectPanel() {
                     className={`shop-row flex items-center gap-3 p-3.5 ${unlocked ? "" : "shop-row-locked opacity-70"} ${focus === b.id ? "ring-2 ring-seal" : ""}`}
                   >
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-ink/10 bg-paper">
-                      <img src={`/sprites/building-${b.sprite}.png?v=2`} alt="" className="h-full w-full object-cover object-top" />
+                      <img src={`/sprites/${b.sprite}_t1.png`} alt="" className="h-full w-full object-cover object-top" />
                       {tier > 0 && (
                         <span className="absolute bottom-0 right-0 rounded-tl-lg bg-ink px-1.5 text-xs leading-5 text-paper">
                           {tierName(b.id, tier)}
