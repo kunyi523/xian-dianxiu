@@ -185,6 +185,30 @@ export function Hud() {
   );
 }
 
+// 世界聊天跑马灯:一念逍遥式场景底部滚动字幕,纯氛围,不占交互
+const TICKER_LINES = [
+  "【世界】剑九：悬剑冢今日第三十九次鸣剑，劫云退了三丈",
+  "【世界】岚织：云阶灯已点亮七盏，诚邀同参",
+  "【世界】位面通告：合抱之木，生于毫末；修道之行，始于足下",
+  "【世界】赤云真人：瀑侧丹灶新开一炉，香火正旺",
+  "【世界】拾烬：云游归来，半块残纹换三两香火",
+  "【世界】玄天老祖：守峰三千年，今日山门又添一盏灯",
+];
+function WorldTicker() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setI((v) => (v + 1) % TICKER_LINES.length), 6000);
+    return () => window.clearInterval(t);
+  }, []);
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-full z-30 px-4 pb-2">
+      <div key={i} className="world-ticker">
+        {TICKER_LINES[i]}
+      </div>
+    </div>
+  );
+}
+
 export function BottomNav() {
   const tab = useGame((s) => s.tab);
   const tutorialStep = useGame((s) => s.tutorialStep);
@@ -200,6 +224,7 @@ export function BottomNav() {
   ];
   return (
     <nav className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 mx-auto max-w-lg">
+      <WorldTicker />
       <div className="seal-nav">
         {items.map((it) => {
           const on = tab === it.id;

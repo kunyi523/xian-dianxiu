@@ -46,6 +46,57 @@ setFxAssetBase(assetUrl("fx"));
 const BAND_CACHE = [buildingsInBand(0), buildingsInBand(1), buildingsInBand(2)] as const;
 const BUILDING_INDEX = new Map(BUILDINGS.map((b, i) => [b.id, i] as const));
 
+// 建筑头顶:朱砂印章 + 书法名号(一念逍遥式),跟建筑一起平移
+const SEAL_CHARS: Record<string, string> = {
+  hall: "香",
+  house: "舍",
+  sword: "剑",
+  array: "纹",
+  mine: "脉",
+  tower: "塔",
+  mirror: "镜",
+  alchemy: "丹",
+};
+function drawBuildingLabel(
+  ctx: CanvasRenderingContext2D,
+  id: string,
+  name: string,
+  x: number,
+  y: number,
+  s: number,
+  time: number,
+) {
+  const seal = SEAL_CHARS[id];
+  if (!seal) return;
+  // 与 drawSpriteBuilding 同锚点:图高 s*2,脚底距顶 1560/1600
+  const topY = y - (1560 / 1600) * s * 2;
+  const bob = Math.sin(time * 1.3 + x * 0.04) * 1.5;
+  const cx = x;
+  const sealY = topY - 36 + bob;
+  const nameY = topY - 14 + bob;
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  // 印章
+  ctx.beginPath();
+  ctx.arc(cx, sealY, 11, 0, Math.PI * 2);
+  ctx.fillStyle = "#B03A2E";
+  ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(244,240,228,0.85)";
+  ctx.stroke();
+  ctx.fillStyle = "#F4F0E4";
+  ctx.font = "600 13px \"Songti SC\",\"STSong\",serif";
+  ctx.fillText(seal, cx, sealY + 0.5);
+  // 名号:纸色光晕保底
+  ctx.font = "600 14px \"Songti SC\",\"STSong\",serif";
+  ctx.shadowColor = "rgba(244,240,228,0.95)";
+  ctx.shadowBlur = 7;
+  ctx.fillStyle = "#2E3438";
+  ctx.fillText(name, cx, nameY);
+  ctx.restore();
+}
+
 type Particle = {
   x: number;
   y: number;
@@ -701,6 +752,7 @@ export function WorldCanvas() {
         if (painted) drawSiteFx(ctx, p.x, p.y, lv, time, def.id, s, false);
         else drawProceduralBuilding(ctx, def, p.x, p.y, lv, time);
         ctx.restore();
+        drawBuildingLabel(ctx, def.id, def.name, p.x, p.y, s, time);
       }
     };
 

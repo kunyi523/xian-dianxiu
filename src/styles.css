@@ -87,10 +87,10 @@
 @layer components {
   /* 顶栏细带：一念逍遥式图标+数字成对，浅墨透明统一在宣纸色系 */
   .ink-topbar {
-    background: color-mix(in oklab, var(--color-paper) 88%, transparent);
+    background: linear-gradient(180deg, rgba(26,30,32,0.94), rgba(26,30,32,0.78));
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+    border-bottom: 1px solid rgba(201,162,75,0.35);
   }
   .topbar-pair {
     display: flex;
@@ -98,13 +98,13 @@
     gap: 5px;
     font-size: 13px;
     line-height: 1;
-    color: var(--color-ink-2);
+    color: rgba(244,240,228,0.82);
     white-space: nowrap;
   }
   .topbar-pair .tp-num {
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    color: var(--color-ink);
+    color: #ecdfb8;
   }
   .topbar-ico {
     display: inline-flex;
@@ -122,6 +122,33 @@
   }
   .topbar-ico.seal {
     background: radial-gradient(circle at 32% 28%, #c8503f, #8a2b21 72%);
+  }
+
+  /* 世界跑马灯:深墨胶囊 + 纸色小字,6 秒一条淡入 */
+  .world-ticker {
+    max-width: 100%;
+    margin: 0 auto;
+    width: fit-content;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(26, 30, 32, 0.5);
+    color: rgba(244, 240, 228, 0.92);
+    font-size: 11px;
+    line-height: 1.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    animation: ticker-in 0.6s ease-out;
+  }
+  @keyframes ticker-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   /* 主卡片：一念逍遥式白卡 + 2px 深灰描边 + 10px 圆角，去大柔光 */
