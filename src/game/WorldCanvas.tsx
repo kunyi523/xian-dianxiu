@@ -5,7 +5,7 @@ import {
   backdropBlit,
   buildingsInBand,
   drawBandMist,
-  drawCraneReal,
+  drawCraneFly,
   drawCultivator,
   drawDistantPeaks,
   drawForeground,
@@ -122,13 +122,13 @@ export function WorldCanvas() {
     let cssW = 390;
     let cssH = 700;
 
-    // 9 只仙鹤实拍图(public/sprites/crane_real.png),缺图打日志、天空留白
-    const cranes = Array.from({ length: 9 }, (_, i) => ({
+    // 3 只丹顶鹤双帧振翅(public/fx/crane_fly_1/2.png)，天空低频飞过，少而小
+    const cranes = Array.from({ length: 3 }, (_, i) => ({
       x: -0.2 + Math.random() * 1.4,
-      y: 0.028 + Math.random() * 0.13,
-      sp: (0.024 + Math.random() * 0.03) * (i % 2 === 0 ? 1 : -1),
-      ph: i * 0.85 + Math.random(),
-      sc: 1.12 + (i % 4) * 0.22,
+      y: 0.03 + Math.random() * 0.12,
+      sp: (0.02 + Math.random() * 0.022) * (i % 2 === 0 ? 1 : -1),
+      ph: i * 2.1 + Math.random(),
+      sc: 0.95 + (i % 3) * 0.18,
     }));
 
     const motes = Array.from({ length: 18 }, () => ({
@@ -172,7 +172,7 @@ export function WorldCanvas() {
     const mountain = new Image();
     mountain.crossOrigin = "anonymous";
     // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
-    mountain.src = assetUrl("bg/bg_qingshan.png");
+    mountain.src = assetUrl("bg/bg_shanshui.png?v=1");
     let mountainOk = false;
     let blit: Blit | null = null;
     // Offscreen cache: avoid drawImage-ing the ~0.9MB JPG every rAF
@@ -195,7 +195,7 @@ export function WorldCanvas() {
       { nx: 0.36, ny: 0.7 },
       { nx: 0.6, ny: 0.68 },
       { nx: 0.48, ny: 0.7 },
-      { nx: 0.3, ny: 0.82 },
+      { nx: 0.3, ny: 0.72 },
     ];
 
     /** 单张空山底图:尺寸变才重建离屏 */
@@ -1019,7 +1019,7 @@ export function WorldCanvas() {
           ctx.fill();
         }
         ctx.restore();
-        drawCraneReal(ctx, p.x, by, time + crane.ph, 54 * crane.sc, face);
+        drawCraneFly(ctx, p.x, by, time + crane.ph, 46 * crane.sc, face);
       }
 
       for (const m of motes) {

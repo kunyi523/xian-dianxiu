@@ -1,29 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-void: #d8cfc0;
-  --color-void-2: #cfc6b6;
-  --color-paper: #f3eee4;
-  --color-paper-2: #e8e0d2;
-  --color-ink: #1c1914;
-  --color-ink-2: #3a3630;
-  --color-wash: #7a7468;
-  --color-muted: #6e685c;
-  --color-faint: #9a9488;
-  --color-seal: #a63d32;
-  --color-seal-dim: #6e2a24;
-  --color-mist: #cfc6b8;
-  --color-border: #2c2924;
+  --color-void: #e9e7de;
+  --color-void-2: #dcd9cf;
+  --color-paper: #faf8f2;
+  --color-paper-2: #f0ede3;
+  --color-ink: #1a1a1a;
+  --color-ink-2: #3a3835;
+  --color-wash: #8a857a;
+  --color-muted: #6e6a60;
+  --color-faint: #a8a29a;
+  --color-seal: #b03a2e;
+  --color-seal-dim: #7e2a22;
+  --color-mist: #d8d4c9;
+  --color-border: #3a3835;
   --color-danger: #8a3028;
-  --color-panel: #f3eee4;
-  --color-panel-2: #e8e0d2;
-  --color-rose: #a63d32;
-  --color-rose-dim: #6e2a24;
-  --color-rose-deep: #4a1e1a;
-  --color-cyan: #3a3630;
-  --color-cyan-dim: #6e685c;
+  --color-panel: #faf8f2;
+  --color-panel-2: #f0ede3;
+  --color-rose: #b03a2e;
+  --color-rose-dim: #7e2a22;
+  --color-rose-deep: #5c1f1a;
+  --color-cyan: #3a3835;
+  --color-cyan-dim: #6e6a60;
   --color-jade: #4a453e;
   --color-gold: #5c564c;
+  --color-gilt: #c9a24b;
 
   --font-display: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
   --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
@@ -84,19 +85,171 @@
 }
 
 @layer components {
-  /* 主卡片：一念逍遥式干净圆角 + 柔光阴影，去硬描边 */
+  /* 顶栏细带：一念逍遥式图标+数字成对，浅墨透明统一在宣纸色系 */
+  .ink-topbar {
+    background: color-mix(in oklab, var(--color-paper) 88%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+  }
+  .topbar-pair {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--color-ink-2);
+    white-space: nowrap;
+  }
+  .topbar-pair .tp-num {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .topbar-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-paper);
+    background: radial-gradient(circle at 32% 28%, #6b655c, #3a3835 72%);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 30%, transparent);
+  }
+  .topbar-ico.seal {
+    background: radial-gradient(circle at 32% 28%, #c8503f, #8a2b21 72%);
+  }
+
+  /* 主卡片：一念逍遥式白卡 + 2px 深灰描边 + 10px 圆角，去大柔光 */
   .hud-box {
-    background: color-mix(in oklab, var(--color-paper) 97%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
-    border-radius: 20px;
-    box-shadow: 0 18px 44px color-mix(in oklab, var(--color-ink) 16%, transparent);
+    background: var(--color-paper);
+    border: 2px solid color-mix(in oklab, var(--color-ink) 72%, transparent);
+    border-radius: 10px;
+    box-shadow: 0 6px 18px color-mix(in oklab, var(--color-ink) 10%, transparent);
   }
 
   .hud-stat {
-    background: color-mix(in oklab, var(--color-paper) 95%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
-    border-radius: 16px;
-    box-shadow: 0 8px 22px color-mix(in oklab, var(--color-ink) 10%, transparent);
+    background: color-mix(in oklab, var(--color-paper) 92%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-ink) 14%, transparent);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px color-mix(in oklab, var(--color-ink) 8%, transparent);
+  }
+
+  /* 商品行公式：白卡 + 2px 深灰描边 + 10px 圆角 */
+  .shop-row {
+    background: #ffffff;
+    border: 2px solid color-mix(in oklab, var(--color-ink) 68%, transparent);
+    border-radius: 10px;
+  }
+  .shop-row-locked {
+    background: #aba9a3;
+    border-color: color-mix(in oklab, var(--color-ink) 40%, transparent);
+  }
+  .shop-row-locked .shop-row-name,
+  .shop-row-locked .shop-row-sub {
+    color: #5c5a55 !important;
+  }
+
+  /* 分区墨线：一笔横墨线 + 居中书法小标题 */
+  .ink-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0 10px;
+  }
+  .ink-divider::before,
+  .ink-divider::after {
+    content: "";
+    flex: 1;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-ink) 55%, transparent));
+  }
+  .ink-divider::after {
+    background: linear-gradient(90deg, color-mix(in oklab, var(--color-ink) 55%, transparent), transparent);
+  }
+  .ink-divider > span {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-indent: 0.28em;
+    color: var(--color-ink-2);
+    white-space: nowrap;
+  }
+
+  /* 面板大标题：书法体 */
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--color-ink);
+    line-height: 1.2;
+  }
+
+  /* 购买主按钮：白底 + 2px 深灰描边 + 黑字 */
+  .buy-btn {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: 0.04em;
+    min-height: 2.75rem;
+    padding: 0.625rem 1.125rem;
+    border: 2px solid color-mix(in oklab, var(--color-ink) 72%, transparent);
+    background: #ffffff;
+    color: var(--color-ink);
+    border-radius: 10px;
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 200ms ease;
+  }
+  .buy-btn:active:not(:disabled) {
+    transform: scale(0.97);
+    background: var(--color-paper-2);
+  }
+  .buy-btn:disabled {
+    opacity: 0.38;
+  }
+
+  /* 数值条：白字描边标签 + 大数字 + 双色渐变横条 */
+  .meter {
+    height: 10px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-ink) 14%, transparent);
+    box-shadow: inset 0 1px 2px color-mix(in oklab, var(--color-ink) 18%, transparent);
+    overflow: hidden;
+  }
+  .meter > i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    transition: width 300ms ease;
+  }
+  .meter-red > i {
+    background: linear-gradient(90deg, #c0392b, #e8752a);
+  }
+  .meter-blue > i {
+    background: linear-gradient(90deg, #445f9b, #5280b9);
+  }
+  .meter-ink > i {
+    background: linear-gradient(90deg, #3a3835, #8a857a);
+  }
+  .meter-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #ffffff;
+    text-shadow:
+      -1px 0 0 var(--color-ink),
+      1px 0 0 var(--color-ink),
+      0 -1px 0 var(--color-ink),
+      0 1px 0 var(--color-ink);
   }
 
   .pixelated {
@@ -156,57 +309,84 @@
     background: color-mix(in oklab, var(--color-seal) 82%, var(--color-ink));
   }
 
-  /* 印鉴底栏：朱砂印片 · 留白克制 */
+  /* 底部圆形墨钮导航：圆形水墨底 + 书法大字 + 朱砂红点 */
   .seal-nav {
     display: flex;
-    gap: 10px;
-    padding: 12px;
-    background: color-mix(in oklab, var(--color-paper) 96%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
-    border-radius: 22px;
-    box-shadow: 0 14px 34px color-mix(in oklab, var(--color-ink) 14%, transparent);
+    gap: 6px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: color-mix(in oklab, var(--color-paper) 90%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
   }
   .seal-chip {
     position: relative;
     flex: 1;
-    min-height: 4rem;
+    min-height: 4.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 13px;
-    letter-spacing: 0.1em;
-    color: var(--color-ink-2);
+    justify-content: flex-start;
+    gap: 3px;
     background: transparent;
-    border: 1px solid color-mix(in oklab, var(--color-ink) 14%, transparent);
-    border-radius: 14px;
-    transition:
-      background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 220ms ease,
-      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 220ms ease;
+    border: none;
+    padding: 0;
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .seal-chip:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: scale(0.94);
   }
-  .seal-chip-on {
+  .seal-disc {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--color-ink-2);
+    background:
+      radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.5), transparent 55%),
+      radial-gradient(circle at 50% 50%, #cfc9bd, #a8a29a 78%);
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in oklab, var(--color-ink) 28%, transparent),
+      0 4px 12px color-mix(in oklab, var(--color-ink) 14%, transparent);
+  }
+  .seal-chip-on .seal-disc {
     color: var(--color-paper);
-    background: var(--color-seal);
-    border-color: transparent;
-    box-shadow: 0 8px 18px color-mix(in oklab, var(--color-seal) 42%, transparent);
+    background:
+      radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.28), transparent 55%),
+      radial-gradient(circle at 50% 50%, #c8503f, #8a2b21 80%);
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in oklab, var(--color-ink) 40%, transparent),
+      0 6px 16px color-mix(in oklab, var(--color-seal) 40%, transparent);
   }
-  .seal-chip-on .seal-chip-mark {
-    opacity: 0.95;
+  .seal-chip-label {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-indent: 0.14em;
+    color: var(--color-ink-2);
+    line-height: 1;
+  }
+  .seal-chip-on .seal-chip-label {
+    color: var(--color-seal);
+    font-weight: 700;
+  }
+  .seal-dot {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 32px);
+    width: 11px;
+    height: 11px;
+    border-radius: 999px;
+    background: #e53935;
+    box-shadow: 0 0 0 2px var(--color-paper);
   }
   .seal-chip-mark {
-    font-family: var(--font-display);
-    font-size: 17px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    line-height: 1;
-    opacity: 0.72;
+    display: none;
   }
 
   /* 对照卷轴头 */
@@ -312,10 +492,15 @@
   @keyframes nav-pulse {
     0%,
     100% {
-      background: var(--color-paper);
+      box-shadow:
+        inset 0 0 0 1.5px color-mix(in oklab, var(--color-ink) 28%, transparent),
+        0 4px 12px color-mix(in oklab, var(--color-ink) 14%, transparent);
     }
     50% {
-      background: color-mix(in oklab, var(--color-seal) 22%, var(--color-paper));
+      box-shadow:
+        inset 0 0 0 1.5px color-mix(in oklab, var(--color-ink) 28%, transparent),
+        0 0 0 6px color-mix(in oklab, var(--color-seal) 32%, transparent),
+        0 4px 12px color-mix(in oklab, var(--color-ink) 14%, transparent);
     }
   }
 

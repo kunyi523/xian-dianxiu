@@ -86,7 +86,6 @@ export function Hud() {
   const combo = useGame((s) => s.combo);
   const missions = useGame((s) => s.missions);
   const lab = useGame((s) => s.labUnlocked);
-  const tab = useGame((s) => s.tab);
   const disciples = useGame((s) => s.disciples);
   const dps = useGame((s) => totalDps(s));
   const mission = missions.find((m) => m.progress < m.target) ?? missions[0];
@@ -125,10 +124,15 @@ export function Hud() {
           </button>
         ) : mission ? (
           <div className="hud-stat flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 px-4">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="truncate text-base text-ink">{mission.title}</div>
-              <div className="text-sm tabular-nums text-muted">
-                {formatMissionProgress(mission.progress, mission.target)}
+              <div className="mt-1 flex items-center gap-2">
+                <div className="meter meter-red min-w-0 flex-1">
+                  <i style={{ width: `${Math.min(100, (mission.progress / Math.max(1, mission.target)) * 100)}%` }} />
+                </div>
+                <div className="shrink-0 text-xs tabular-nums text-muted">
+                  {formatMissionProgress(mission.progress, mission.target)}
+                </div>
               </div>
             </div>
             <span className="shrink-0 text-sm font-medium text-seal">玉×{mission.rewardJade}</span>
@@ -148,63 +152,34 @@ export function Hud() {
         </button>
       </div>
 
-      {/* qi/jade/etc. stay visible while a bottom Sheet tab is open */}
-      <div
-        className={
-          tab === null
-            ? "pointer-events-none absolute inset-x-3 top-[5.25rem] flex gap-2.5"
-            : "pointer-events-none absolute inset-x-3 top-[5.25rem] z-20 flex flex-wrap justify-end gap-2"
-        }
-      >
-        {tab === null ? (
-          <>
-            <div className="hud-stat flex-1 px-4 py-3">
-              <div className="text-xs tracking-[0.28em] text-muted">香火</div>
-              <div className="font-mono text-4xl leading-tight tabular-nums text-ink">{formatNum(qi)}</div>
-              <div className="mt-1 text-sm tabular-nums text-muted">{formatNum(dps)} 山息/秒</div>
-            </div>
-            <div className="hud-stat flex-1 px-4 py-3">
-              <div className="text-xs tracking-[0.28em] text-muted">资粮</div>
-              <div className="mt-1.5 space-y-1 text-base tabular-nums text-ink">
-                <div className="flex justify-between">
-                  <span className="text-muted">仙玉</span>
-                  <span>{formatNum(jade)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted">灵草</span>
-                  <span>{formatNum(Math.floor(herbs))}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted">脉晶</span>
-                  <span>{formatNum(Math.floor(ore))}</span>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="hud-stat px-3.5 py-2.5">
-              <span className="mr-1.5 text-xs tracking-widest text-muted">香火</span>
-              <span className="font-mono text-lg leading-none tabular-nums text-ink">{formatNum(qi)}</span>
-              <span className="ml-1.5 text-xs tabular-nums text-muted">{formatNum(dps)} 山息</span>
-            </div>
-            <div className="hud-stat flex items-center gap-3 px-3.5 py-2.5 text-sm tabular-nums text-ink">
-              <span>
-                <span className="text-muted">仙玉</span> {formatNum(jade)}
-              </span>
-              <span>
-                <span className="text-muted">草</span> {formatNum(Math.floor(herbs))}
-              </span>
-              <span>
-                <span className="text-muted">矿</span> {formatNum(Math.floor(ore))}
-              </span>
-            </div>
-          </>
-        )}
+      {/* 顶栏细带：图标+数字成对，只放香火/山息与货币 */}
+      <div className="pointer-events-none absolute inset-x-0 top-[4.5rem]">
+        <div className="ink-topbar flex items-center gap-4 overflow-x-auto px-4 py-2">
+          <span className="topbar-pair">
+            <span className="topbar-ico seal">香</span>
+            <span className="tp-num">{formatNum(qi)}</span>
+          </span>
+          <span className="topbar-pair">
+            <span className="topbar-ico">息</span>
+            <span className="tp-num">{formatNum(dps)}/秒</span>
+          </span>
+          <span className="topbar-pair">
+            <span className="topbar-ico">玉</span>
+            <span className="tp-num">{formatNum(jade)}</span>
+          </span>
+          <span className="topbar-pair">
+            <span className="topbar-ico">草</span>
+            <span className="tp-num">{formatNum(Math.floor(herbs))}</span>
+          </span>
+          <span className="topbar-pair">
+            <span className="topbar-ico">矿</span>
+            <span className="tp-num">{formatNum(Math.floor(ore))}</span>
+          </span>
+        </div>
       </div>
 
       {combo > 2 && (
-        <div className="pointer-events-none absolute left-4 top-24 font-display text-4xl text-seal">{combo} 开光</div>
+        <div className="pointer-events-none absolute left-4 top-32 font-display text-4xl text-seal">{combo} 开光</div>
       )}
     </div>
   );
@@ -224,20 +199,25 @@ export function BottomNav() {
     { id: "dao", label: "道藏", mark: "道" },
   ];
   return (
-    <nav className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 mx-auto max-w-lg px-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+    <nav className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 mx-auto max-w-lg">
       <div className="seal-nav">
         {items.map((it) => {
           const on = tab === it.id;
-          const pulse = (tutorialStep === 3 && it.id === "fate") || (realmReady && it.id === "realm");
+          const dot = realmReady && it.id === "realm";
+          const pulse = tutorialStep === 3 && it.id === "fate";
           return (
             <button
               key={it.id}
               type="button"
               onClick={() => useGame.getState().setTab(it.id)}
-              className={`seal-chip ${on ? "seal-chip-on" : ""} ${pulse ? "nav-pulse" : ""}`}
+              className={`seal-chip ${on ? "seal-chip-on" : ""}`}
+              aria-label={it.label}
             >
-              <span className="seal-chip-mark">{it.mark}</span>
-              <span>{it.label}</span>
+              <span className={`seal-disc ${pulse ? "nav-pulse" : ""}`}>
+                {it.mark}
+                {dot && <span className="seal-dot" aria-hidden />}
+              </span>
+              <span className="seal-chip-label">{it.label}</span>
             </button>
           );
         })}
@@ -253,10 +233,7 @@ export function Sheet() {
     <div className="pointer-events-auto absolute inset-x-0 bottom-28 z-30 mx-auto max-w-lg px-3 pb-1">
       <div className="sheet-enter hud-box max-h-[62vh] overflow-y-auto bg-paper p-5" data-allow-touch-scroll>
         <div className="sheet-axis sticky top-0 z-10 bg-paper/95">
-          <div className="flex items-center gap-2.5">
-            <span className="sheet-axis-knob" aria-hidden />
-            <span className="sheet-axis-label">{TAB_AXIS[tab] ?? "对照卷"}</span>
-          </div>
+          <div className="panel-title">{TAB_AXIS[tab] ?? "对照卷"}</div>
           <button
             type="button"
             onClick={() => useGame.getState().setTab(tab)}
@@ -308,7 +285,7 @@ function SectPanel() {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-xl text-ink">仙山对照</h2>
+        <h2 className="panel-title">仙山对照</h2>
         <BuyToggle />
       </div>
       <p className="mb-3 text-sm text-muted">天道第 {layer + 1} 层 · 主购在山体碑亭，此卷快捷升级</p>
@@ -317,7 +294,9 @@ function SectPanel() {
         if (!list.length) return null;
         return (
           <div key={band}>
-            <div className="band-head">{title}</div>
+            <div className="ink-divider">
+              <span>{title}</span>
+            </div>
             <ul className="flex flex-col gap-2.5">
               {list.map((b) => {
                 const i = BUILDINGS.findIndex((x) => x.id === b.id);
@@ -331,7 +310,7 @@ function SectPanel() {
                 return (
                   <li
                     key={b.id}
-                    className={`flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5 ${unlocked ? "" : "opacity-40"} ${focus === b.id ? "ring-2 ring-seal" : ""}`}
+                    className={`shop-row flex items-center gap-3 p-3.5 ${unlocked ? "" : "shop-row-locked opacity-70"} ${focus === b.id ? "ring-2 ring-seal" : ""}`}
                   >
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-ink/10 bg-paper">
                       <img src={`/sprites/building-${b.sprite}.png?v=2`} alt="" className="h-full w-full object-cover object-top" />
@@ -343,10 +322,10 @@ function SectPanel() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-base font-semibold text-ink">{b.name}</span>
+                        <span className="shop-row-name text-base font-semibold text-ink">{b.name}</span>
                         <span className="text-sm tabular-nums text-muted">Lv.{lv}</span>
                       </div>
-                      <div className="line-clamp-1 text-sm text-faint">{unlocked ? b.flavor : lockHint(b.id, unlocked)}</div>
+                      <div className="shop-row-sub line-clamp-1 text-sm text-faint">{unlocked ? b.flavor : lockHint(b.id, unlocked)}</div>
                       <div className="mt-0.5 text-sm tabular-nums text-seal">
                         {formatNum(buildingBreath(useGame.getState(), b, Math.max(1, lv)))} 山息/秒
                         {lv > 0 ? ` · ${perkLine(b.id, lv)}` : ""}
@@ -357,7 +336,7 @@ function SectPanel() {
                       type="button"
                       disabled={!can}
                       onClick={() => useGame.getState().buyBuilding(b.id)}
-                      className="ink-btn ink-btn-solid min-h-11 shrink-0 px-4 text-sm leading-tight"
+                      className="buy-btn min-h-11 shrink-0 px-4 text-sm leading-tight"
                     >
                       {unlocked ? formatNum(cost) : "未开"}
                     </button>
@@ -379,7 +358,7 @@ function MindPanel() {
   const cc = useGame((s) => critChance(s));
   return (
     <div>
-      <h2 className="mb-1 font-display text-xl text-ink">开光</h2>
+      <h2 className="panel-title mb-1">开光</h2>
       <p className="mb-4 text-sm text-muted">
         开光 {formatNum(power)} · 暴机 {(cc * 100).toFixed(0)}%
       </p>
@@ -391,20 +370,20 @@ function MindPanel() {
           const cost = clickUpgradeCost(u.id, lv);
           const can = !maxed && !locked && qi >= cost;
           return (
-            <li key={u.id} className="flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5">
+            <li key={u.id} className={`shop-row flex items-center gap-3 p-3.5 ${locked ? "shop-row-locked opacity-70" : ""}`}>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-base font-semibold">{u.name}</span>
+                  <span className="shop-row-name text-base font-semibold">{u.name}</span>
                   <span className="text-sm text-muted">Lv.{lv}</span>
                 </div>
-                <div className="mt-0.5 text-sm text-faint">{u.desc}</div>
+                <div className="shop-row-sub mt-0.5 text-sm text-faint">{u.desc}</div>
                 {locked && <div className="mt-0.5 text-sm text-seal">需指尖开光 5 级</div>}
               </div>
               <button
                 type="button"
                 disabled={!can}
                 onClick={() => useGame.getState().buyClick(u.id)}
-                className="ink-btn ink-btn-solid min-h-11 shrink-0 px-4 text-sm"
+                className="buy-btn min-h-11 shrink-0 px-4 text-sm"
               >
                 {maxed ? "已满" : formatNum(cost)}
               </button>
@@ -424,7 +403,7 @@ function FatePanel() {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-xl text-ink">拜山</h2>
+        <h2 className="panel-title">拜山</h2>
         <span className="text-sm text-muted">缘簿余 {40 - pity}</span>
       </div>
       <div className="mb-4 flex gap-2.5">
@@ -432,7 +411,7 @@ function FatePanel() {
           type="button"
           disabled={jade < 10}
           onClick={() => useGame.getState().pull(1)}
-          className="ink-btn ink-btn-solid min-h-12 flex-1 text-base"
+          className="buy-btn min-h-12 flex-1 text-base"
         >
           投缘 · 10 缘玉
         </button>
@@ -440,13 +419,13 @@ function FatePanel() {
           type="button"
           disabled={jade < 90}
           onClick={() => useGame.getState().pull(10)}
-          className="ink-btn min-h-12 flex-1 text-base"
+          className="buy-btn min-h-12 flex-1 text-base"
         >
           十缘 · 90
         </button>
       </div>
       {reveal && (
-        <div className="mb-4 rounded-2xl border border-ink/10 bg-paper p-3.5">
+        <div className="shop-row mb-4 p-3.5">
           <div className="mb-2.5 flex items-center justify-between">
             <span className="text-sm text-muted">此番拜山所得</span>
             <button type="button" className="min-h-11 px-3 text-sm font-semibold text-seal" onClick={() => useGame.getState().clearGacha()}>
@@ -490,7 +469,7 @@ function FatePanel() {
               const d = DISCIPLES.find((x) => x.id === o.id);
               if (!d) return null;
               return (
-                <li key={o.id} className="flex items-center gap-2.5 rounded-2xl bg-paper-2/70 p-3">
+                <li key={o.id} className="shop-row flex items-center gap-2.5 p-3">
                   <div className="h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-ink/10 bg-paper">
                     <PortraitImg d={d} className="h-20 w-16 object-cover object-top" />
                   </div>
@@ -571,11 +550,11 @@ function RealmPanel() {
   const now = Date.now();
   return (
     <div>
-      <h2 className="mb-1 font-display text-xl text-ink">云游</h2>
+      <h2 className="panel-title mb-1">云游</h2>
       <p className="mb-4 text-sm text-muted">派山门中人云游闭关。云阶灯火亮起后可多开一路。</p>
       <div className="mb-3 flex flex-col gap-2.5">
         {explores.map((slot, i) => (
-          <div key={i} className="rounded-2xl bg-paper-2/70 p-3.5">
+          <div key={i} className="shop-row p-3.5">
             <div className="mb-2 text-sm text-muted">第 {i + 1} 路</div>
             {!slot ? (
               <div className="flex flex-wrap gap-1.5">
@@ -587,7 +566,7 @@ function RealmPanel() {
                       type="button"
                       disabled={locked}
                       onClick={() => useGame.getState().startExplore(i, r.id)}
-                      className="ink-btn min-h-11 px-3 text-sm"
+                      className="buy-btn min-h-11 px-3 text-sm"
                     >
                       {locked ? `${r.name} · ${r.unlockLayer}层` : `${r.name} · ${formatTime(r.duration)}`}
                     </button>
@@ -598,7 +577,7 @@ function RealmPanel() {
               <button
                 type="button"
                 onClick={() => useGame.getState().claimExplore(i)}
-                className="ink-btn ink-btn-solid min-h-12 w-full text-base"
+                className="buy-btn min-h-12 w-full text-base"
               >
                 云游归来
               </button>
@@ -630,7 +609,7 @@ function DaoPanel() {
   return (
     <div className="flex flex-col gap-7">
       <div>
-        <h2 className="font-display text-xl text-ink">劫后归山</h2>
+        <h2 className="panel-title">劫后归山</h2>
         <p className="mb-3 mt-1 text-sm text-muted">
           已归山 {prestigeCount} 次 · 本次可得道果 {fruit || "—"}
         </p>
@@ -638,7 +617,7 @@ function DaoPanel() {
           type="button"
           disabled={fruit < 1}
           onClick={() => useGame.getState().prestige()}
-          className="ink-btn ink-btn-solid min-h-13 w-full text-base"
+          className="buy-btn min-h-13 w-full text-base"
         >
           {fruit < 1 ? "山息未满，不可归山" : `劫后归山 · 得 ${fruit} 道果`}
         </button>
@@ -646,13 +625,15 @@ function DaoPanel() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-base font-semibold text-ink">功法 · 道果 {formatNum(dao)}</h3>
+        <div className="ink-divider">
+          <span>功法 · 道果 {formatNum(dao)}</span>
+        </div>
         {!lab && (
           <button
             type="button"
             disabled={jade < 20}
             onClick={() => useGame.getState().unlockLab()}
-            className="ink-btn mb-3 min-h-12 w-full text-sm"
+            className="buy-btn mb-3 min-h-12 w-full text-sm"
           >
             花费 20 仙玉解锁藏经阁
           </button>
@@ -663,21 +644,21 @@ function DaoPanel() {
             const cost = skillCost(sk.id, lv);
             const can = lab && lv < sk.max && dao >= cost;
             return (
-              <li key={sk.id} className="flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5">
+              <li key={sk.id} className="shop-row flex items-center gap-3 p-3.5">
                 <div className="min-w-0 flex-1">
                   <div className="flex justify-between text-sm">
-                    <span className="font-semibold">{sk.name}</span>
+                    <span className="shop-row-name font-semibold">{sk.name}</span>
                     <span className="text-muted">
                       {lv}/{sk.max}
                     </span>
                   </div>
-                  <div className="mt-0.5 text-sm text-faint">{sk.desc}</div>
+                  <div className="shop-row-sub mt-0.5 text-sm text-faint">{sk.desc}</div>
                 </div>
                 <button
                   type="button"
                   disabled={!can}
                   onClick={() => useGame.getState().buySkill(sk.id)}
-                  className="ink-btn min-h-11 shrink-0 px-4 text-sm"
+                  className="buy-btn min-h-11 shrink-0 px-4 text-sm"
                 >
                   {lv >= sk.max ? "已满" : `${cost} 果`}
                 </button>
@@ -688,7 +669,9 @@ function DaoPanel() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-base font-semibold text-ink">炼器</h3>
+        <div className="ink-divider">
+          <span>炼器</span>
+        </div>
         {alchemy < 1 ? (
           <p className="text-sm text-muted">建起瀑侧丹灶后方可炼制法宝。</p>
         ) : (
@@ -697,12 +680,12 @@ function DaoPanel() {
               const lv = crafts[c.id] ?? 0;
               const can = lv < c.max && herbs >= c.herbs && ore >= c.ore && jade >= c.jade;
               return (
-                <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-paper-2/70 p-3.5">
+                <li key={c.id} className="shop-row flex items-center gap-3 p-3.5">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold">
+                    <div className="shop-row-name text-sm font-semibold">
                       {c.name} · {lv}/{c.max}
                     </div>
-                    <div className="mt-0.5 text-sm text-faint">
+                    <div className="shop-row-sub mt-0.5 text-sm text-faint">
                       {c.desc} · 草{c.herbs} 矿{c.ore} 玉{c.jade}
                     </div>
                   </div>
@@ -710,7 +693,7 @@ function DaoPanel() {
                     type="button"
                     disabled={!can}
                     onClick={() => useGame.getState().craft(c.id)}
-                    className="ink-btn min-h-11 shrink-0 px-5 text-sm"
+                    className="buy-btn min-h-11 shrink-0 px-5 text-sm"
                   >
                     炼
                   </button>
