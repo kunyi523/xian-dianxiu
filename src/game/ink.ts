@@ -1201,8 +1201,7 @@ export function drawSiteFx(
     drawBaseMist(ctx, x, y, s);
     // 仙气:建筑绘制之后,低透明 overlay,不遮建筑主体
     drawXianqiOverlay(ctx, x, y, s, t);
-    // 前景压脚:山石草丛盖住底座下沿,建筑嵌进山里
-    drawBaseOverlap(ctx, x, y, s, id);
+    // 前景压脚已移除:和新青绿横卷背景冲突,底座出现蓝灰色"爪状"笔触;建筑自带水墨山石底座,无需再压
     ctx.restore();
     return;
   }
