@@ -2,29 +2,30 @@ import { BUILDINGS, HERB_PER_MIN_PER_LV, ORE_PER_MIN_PER_LV, type BuildingDef } 
 
 export const TIER_NAME = ["", "草创", "开山", "仙府", "仙宫"] as const;
 
-/* ---------- 清新调色板 v9（一念逍遥风：去黄去旧） ----------
- * 天空淡蓝 → 山峦青绿 → 墨色青灰 → 水面明澈，金只做克制点缀。
- * 所有世界渲染统一走这里，不要再散写暖黄/赭石色值。 */
+/* ---------- 暖褐水墨调色板 v10（一念逍遥式：暖米纸底 + 暖灰墨山） ----------
+ * 用户 2026-09-24 定版：完完全全按一念逍遥截图重来，v9 清新青绿作废。
+ * 天空暖纸 → 山峦暖灰墨 → 深墨暖黑 → 水面暖灰，金做暖金点缀。
+ * 所有世界渲染统一走这里。 */
 export const PAL = {
-  skyTop: "#c9e6f2", // 天空·淡蓝
-  skyMid: "#ddf0ea", // 天空·蓝绿过渡
-  skyBot: "#f2faf6", // 天空·近白
-  peakFar: "#a9cbbb", // 远山·青绿
-  peakMid: "#7fb3a2", // 中山·青
-  peakNear: "#55897c", // 近山·深青
-  ink: "#2c383e", // 墨·青灰（主）
-  inkSoft: "#46545b", // 墨·青灰（淡）
-  inkFaint: "rgba(44,56,62,", // 需拼 alpha 的墨
-  water: "#bfe3ea", // 水·明澈
-  mist: "rgba(224,240,236,", // 雾·青白
-  stone: "#d4dcd8", // 石径·浅
-  stoneEdge: "#9fb2ab", // 石径·边
-  gold: "#c9a227", // 金·克制点缀
-  seal: "#b13a2c", // 朱砂·稍亮，配清新底
-  paper: "#f2faf6", // 纸·青白
-  ghost: "#8fa6ab", // 虚印地基·青灰
-  robeBlue: "#3d5a66",
-  robeWhite: "#eef5f2",
+  skyTop: "#dcd7c6", // 天空·暖灰
+  skyMid: "#e4dfd0", // 天空·暖纸过渡
+  skyBot: "#ece5d2", // 天空·纸白
+  peakFar: "#b0a898", // 远山·淡暖灰墨
+  peakMid: "#928676", // 中山·暖灰
+  peakNear: "#6b6558", // 近山·深暖灰
+  ink: "#232429", // 墨·暖黑（主）
+  inkSoft: "#4a443c", // 墨·暖灰（淡）
+  inkFaint: "rgba(35,36,41,", // 需拼 alpha 的墨
+  water: "#cfc8b4", // 水·暖灰
+  mist: "rgba(236,229,210,", // 雾·暖纸
+  stone: "#d8d0bd", // 石径·浅暖
+  stoneEdge: "#a89f8d", // 石径·边
+  gold: "#d8c690", // 金·暖金点缀
+  seal: "#412d26", // 徽章·深褐（配暖纸）
+  paper: "#ece5d2", // 纸·暖米
+  ghost: "#a89f8d", // 虚印地基·暖灰
+  robeBlue: "#5c4a3a",
+  robeWhite: "#ece5d2",
 } as const;
 
 /** 建筑五阶段:0废墟 1雏形(破) 2成型 3宏伟 4仙宫(满级) */
@@ -429,7 +430,7 @@ export function buildingsInBand(band: 0 | 1 | 2) {
 // 人物配色：青白为主，朱砂/玄青点缀，配清新背景
 const SKIN = ["#e8c39a", "#dfb183", "#d09a6e", "#f0cfae", "#ddac82", "#cfa37e"];
 const HAIR = ["#232a2e", "#2e363b", "#1f2529", "#3a444a"];
-const ROBE = ["#eef5f2", "#b13a2c", "#3d5a66", "#f6faf8", "#5c7078", "#8c2f28"];
+const ROBE = ["#ece5d2", "#7a3a2c", "#5c4a3a", "#f2ecdc", "#6b5a44", "#8c2f28"];
 
 // 渐变缓存:createRadial/LinearGradient 有开销,动画参数量化后跨帧复用同一对象
 const gradCache = new Map<string, CanvasGradient>();
@@ -511,7 +512,7 @@ export function drawPeaks(ctx: CanvasRenderingContext2D, w: number, h: number, b
 export function drawWaterfall(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
   ctx.save();
   ctx.globalAlpha = 0.5;
-  ctx.strokeStyle = "#eaf6fb";
+  ctx.strokeStyle = "#f4ecdc";
   ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.moveTo(w * 0.18, h * 0.22);
@@ -540,11 +541,11 @@ export function drawPath(ctx: CanvasRenderingContext2D, w: number, h: number) {
     };
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.strokeStyle = `rgba(159,178,171,${[0.42, 0.3, 0.22][pi] ?? 0.25})`;
+    ctx.strokeStyle = `rgba(168,159,141,${[0.42, 0.3, 0.22][pi] ?? 0.25})`;
     ctx.lineWidth = pi === 0 ? 7 : 5;
     trace();
     ctx.stroke();
-    ctx.strokeStyle = `rgba(228,235,231,${[0.9, 0.72, 0.55][pi] ?? 0.6})`;
+    ctx.strokeStyle = `rgba(244,236,220,${[0.9, 0.72, 0.55][pi] ?? 0.6})`;
     ctx.lineWidth = pi === 0 ? 3.4 : 2.4;
     trace();
     ctx.stroke();
@@ -557,7 +558,7 @@ export function drawBandMist(ctx: CanvasRenderingContext2D, w: number, h: number
 }
 
 export function drawForeground(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  ctx.fillStyle = "#3f5158";
+  ctx.fillStyle = "#4a443c";
   ctx.beginPath();
   ctx.moveTo(0, h);
   ctx.lineTo(0, h * 0.92);
@@ -802,7 +803,7 @@ export function drawTribCloud(
   ctx.ellipse(cx + s * 0.05, cy, s * (0.16 + pulse * 0.35), s * (0.08 + pulse * 0.16), 0.12, 0, Math.PI * 2);
   ctx.fill();
   // 云端高光一点
-  ctx.fillStyle = `rgba(242,250,246,${0.22 + pulse * 0.15})`;
+  ctx.fillStyle = `rgba(236,229,210,${0.22 + pulse * 0.15})`;
   ctx.beginPath();
   ctx.ellipse(cx - s * 0.06, cy - s * 0.05, s * 0.045, s * 0.022, -0.4, 0, Math.PI * 2);
   ctx.fill();
@@ -823,18 +824,18 @@ export function drawStamp(
   ctx.globalAlpha = owned ? 0.7 : locked ? 0.38 : 0.55;
   ctx.beginPath();
   ctx.arc(0, 0, r + 1.6, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(242,250,246,0.35)";
+  ctx.fillStyle = "rgba(236,229,210,0.35)";
   ctx.fill();
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.fillStyle = owned ? "rgba(44,56,62,0.72)" : locked ? "rgba(143,166,171,0.55)" : "rgba(70,84,91,0.6)";
+  ctx.fillStyle = owned ? "rgba(35,36,41,0.72)" : locked ? "rgba(143,166,171,0.55)" : "rgba(70,84,91,0.6)";
   ctx.fill();
-  ctx.strokeStyle = owned ? "rgba(242,250,246,0.65)" : "rgba(159,178,171,0.5)";
+  ctx.strokeStyle = owned ? "rgba(236,229,210,0.65)" : "rgba(168,159,141,0.5)";
   ctx.lineWidth = 1.2;
   ctx.stroke();
   ctx.globalAlpha = locked ? 0.55 : 0.95;
-  ctx.fillStyle = "#f2faf6";
-  ctx.strokeStyle = "#f2faf6";
+  ctx.fillStyle = "#ece5d2";
+  ctx.strokeStyle = "#ece5d2";
   ctx.lineWidth = 1.2;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -850,8 +851,8 @@ export function drawStamp(
 }
 
 function drawStampMark(ctx: CanvasRenderingContext2D, id: string) {
-  ctx.strokeStyle = "#f2faf6";
-  ctx.fillStyle = "#f2faf6";
+  ctx.strokeStyle = "#ece5d2";
+  ctx.fillStyle = "#ece5d2";
   ctx.lineWidth = 1.25;
   ctx.lineCap = "round";
   if (id === "sword") {
@@ -1011,14 +1012,14 @@ function drawBaseOverlap(
     ctx.fill();
     ctx.restore();
     // 石顶受光:一道淡线,和背景山同一套笔法
-    ctx.strokeStyle = "rgba(242,250,246,0.55)";
+    ctx.strokeStyle = "rgba(236,229,210,0.55)";
     ctx.lineWidth = Math.max(1, s * 0.014);
     ctx.beginPath();
     ctx.moveTo(rx - rw * 0.7, ry - rh * 0.55);
     ctx.quadraticCurveTo(rx, ry - rh * 1.05, rx + rw * 0.7, ry - rh * 0.5);
     ctx.stroke();
     // 皴笔:两三道短线,和背景山同一套笔法
-    ctx.strokeStyle = "rgba(44,56,62,0.35)";
+    ctx.strokeStyle = "rgba(35,36,41,0.35)";
     ctx.lineWidth = Math.max(1, s * 0.012);
     for (let k = 0; k < 3; k++) {
       const sx = rx - rw * 0.5 + rnd() * rw;
@@ -1029,7 +1030,7 @@ function drawBaseOverlap(
     }
   }
   // 草丛:几笔出锋,散在底座前
-  ctx.strokeStyle = "rgba(44,56,62,0.5)";
+  ctx.strokeStyle = "rgba(35,36,41,0.5)";
   ctx.lineWidth = Math.max(1, s * 0.01);
   ctx.lineCap = "round";
   for (let k = 0; k < 8; k++) {
@@ -1377,7 +1378,7 @@ export function drawUpgradeBurst(
   ctx.ellipse(x, y + 6, 18 + (1 - a) * 70, 10 + (1 - a) * 28, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = a * 0.7;
-  ctx.fillStyle = tierUp ? "rgba(177,58,44,0.55)" : "rgba(242,250,246,0.55)";
+  ctx.fillStyle = tierUp ? "rgba(177,58,44,0.55)" : "rgba(236,229,210,0.55)";
   ctx.fillRect(x - (tierUp ? 5 : 3), y - (40 + (1 - a) * 90), tierUp ? 10 : 6, 50 + (1 - a) * 90);
   ctx.strokeStyle = `rgba(177,58,44,${a})`;
   ctx.lineWidth = tierUp ? 3 : 2;

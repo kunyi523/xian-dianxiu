@@ -45,7 +45,7 @@ setFxAssetBase(assetUrl("fx"));
 const BAND_CACHE = [buildingsInBand(0), buildingsInBand(1), buildingsInBand(2)] as const;
 const BUILDING_INDEX = new Map(BUILDINGS.map((b, i) => [b.id, i] as const));
 
-// 建筑头顶:朱砂印章 + 书法名号(一念逍遥式),跟建筑一起平移
+// 建筑标识:一念逍遥式深褐圆徽 + 暖金单字,名号暖金书法缀于徽下,跟建筑一起平移
 const SEAL_CHARS: Record<string, string> = {
   hall: "香",
   house: "舍",
@@ -66,30 +66,31 @@ function drawBuildingLabel(
 ) {
   const seal = SEAL_CHARS[id];
   if (!seal) return;
-  // 印章落在建筑底座中心(原灰色圆圈的位置),名号缀在印章下方,随建筑一起平移
+  // 圆徽落在建筑底座中心,名号缀在圆徽下方,随建筑一起平移
   const bob = Math.sin(time * 1.3 + x * 0.04) * 1.5;
   const cx = x;
   const sealY = y - 6 + bob;
-  const nameY = y + 20 + bob;
+  const nameY = y + 21 + bob;
   ctx.save();
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  // 印章
+  // 深褐圆徽
   ctx.beginPath();
   ctx.arc(cx, sealY, 11, 0, Math.PI * 2);
-  ctx.fillStyle = "#B03A2E";
+  ctx.fillStyle = "#2e2a26";
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "rgba(244,240,228,0.85)";
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = "rgba(216,198,144,0.55)";
   ctx.stroke();
-  ctx.fillStyle = "#F4F0E4";
+  ctx.fillStyle = "#e8d9a8";
   ctx.font = "600 13px \"Songti SC\",\"STSong\",serif";
   ctx.fillText(seal, cx, sealY + 0.5);
-  // 名号:纸色光晕保底
+  // 名号:暖金书法,深墨描边保底
   ctx.font = "600 14px \"Songti SC\",\"STSong\",serif";
-  ctx.shadowColor = "rgba(244,240,228,0.95)";
-  ctx.shadowBlur = 7;
-  ctx.fillStyle = "#2E3438";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(35,32,28,0.85)";
+  ctx.strokeText(name, cx, nameY);
+  ctx.fillStyle = "#f0e6c8";
   ctx.fillText(name, cx, nameY);
   ctx.restore();
 }
@@ -220,7 +221,7 @@ export function WorldCanvas() {
     const mountain = new Image();
     mountain.crossOrigin = "anonymous";
     // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
-    mountain.src = assetUrl("bg/bg_shanshui.png?v=1");
+    mountain.src = assetUrl("bg/bg_shanshui.png?v=2");
     let mountainOk = false;
     let blit: Blit | null = null;
     // Offscreen cache: avoid drawImage-ing the ~0.9MB JPG every rAF
@@ -306,7 +307,7 @@ export function WorldCanvas() {
             vy: Math.sin(a) * sp - 8,
             life: 0.32 + Math.random() * 0.22,
             max: 0.55,
-            color: e.crit ? "#b13a2c" : "#46545b",
+            color: e.crit ? "#7a3a2c" : "#4a443c",
             kind: "mote",
             size: e.crit ? 2.2 : 1.55,
           });
@@ -318,7 +319,7 @@ export function WorldCanvas() {
           vy: 0,
           life: 0.26,
           max: 0.26,
-          color: e.crit ? "#b13a2c" : "#2c383e",
+          color: e.crit ? "#7a3a2c" : "#232429",
           kind: "ring",
           size: e.crit ? 8 : 6,
         });
@@ -346,7 +347,7 @@ export function WorldCanvas() {
             vy: Math.sin(a) * 28,
             life: 0.7,
             max: 0.7,
-            color: i % 2 ? "#b13a2c" : "#2c383e",
+            color: i % 2 ? "#7a3a2c" : "#232429",
             kind: "mote",
             size: 2,
           });
@@ -373,7 +374,7 @@ export function WorldCanvas() {
                 vy: Math.sin(a) * sp * 0.7 - 18,
                 life: e.tierUp ? 1.1 : 0.75,
                 max: e.tierUp ? 1.1 : 0.75,
-                color: i % 2 ? "#b13a2c" : "#f2faf6",
+                color: i % 2 ? "#7a3a2c" : "#ece5d2",
                 kind: i % 4 === 0 ? "ring" : "mote",
                 size: e.tierUp ? 3.2 : 2.2,
               });
@@ -406,7 +407,7 @@ export function WorldCanvas() {
             vy: Math.sin(a) * sp - 10,
             life: 0.85 + Math.random() * 0.45,
             max: 1.3,
-            color: i % 3 === 0 ? "#b13a2c" : i % 2 ? "#46545b" : "#5c7078",
+            color: i % 3 === 0 ? "#7a3a2c" : i % 2 ? "#4a443c" : "#6b5f4e",
             kind: "mote",
             size: 1.6 + Math.random() * 1.2,
           });
@@ -418,7 +419,7 @@ export function WorldCanvas() {
           vy: 0,
           life: 0.5,
           max: 0.5,
-          color: "#b13a2c",
+          color: "#7a3a2c",
           kind: "ring",
           size: 6,
         });
@@ -489,7 +490,7 @@ export function WorldCanvas() {
                 vy: Math.sin(a) * sp * 0.55 - 4,
                 life: 0.5 + Math.random() * 0.3,
                 max: 0.85,
-                color: i % 2 ? "#5c7078" : "#46545b",
+                color: i % 2 ? "#6b5f4e" : "#4a443c",
                 kind: "mote",
                 size: 1.3 + Math.random() * 0.6,
               });
@@ -501,7 +502,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.34,
               max: 0.34,
-              color: "#46545b",
+              color: "#4a443c",
               kind: "ring",
               size: 4,
             });
@@ -523,10 +524,10 @@ export function WorldCanvas() {
                 max: 1.05,
                 color:
                   fxKind === "seal" || fxKind === "dawn"
-                    ? "#b13a2c"
+                    ? "#7a3a2c"
                     : fxKind === "void"
-                      ? "#2c383e"
-                      : "#46545b",
+                      ? "#232429"
+                      : "#4a443c",
                 kind: fxKind === "sword" ? "sword" : i % 5 === 0 ? "ring" : "mote",
                 size: fxKind === "sword" ? 2.5 : fxKind === "seal" ? 4.5 : 2.1,
               });
@@ -539,7 +540,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.62,
               max: 0.62,
-              color: fxKind === "void" ? "#2c383e" : "#b13a2c",
+              color: fxKind === "void" ? "#232429" : "#7a3a2c",
               kind: "ring",
               size: 10,
             });
@@ -551,7 +552,7 @@ export function WorldCanvas() {
                 vy: 0,
                 life: 0.42,
                 max: 0.42,
-                color: "#b13a2c",
+                color: "#7a3a2c",
                 kind: "ring",
                 size: 6,
               });
@@ -585,14 +586,14 @@ export function WorldCanvas() {
                 max: 1.45,
                 color:
                   fxKind === "dawn"
-                    ? i % 2 ? "#b13a2c" : "#5c7078"
+                    ? i % 2 ? "#7a3a2c" : "#6b5f4e"
                     : fxKind === "seal"
-                      ? i % 2 ? "#b13a2c" : "#2c383e"
+                      ? i % 2 ? "#7a3a2c" : "#232429"
                       : fxKind === "void"
-                        ? i % 3 === 0 ? "#f2faf6" : "#2c383e"
+                        ? i % 3 === 0 ? "#ece5d2" : "#232429"
                         : fxKind === "sword"
-                          ? i % 2 ? "#46545b" : "#2c383e"
-                          : "#46545b",
+                          ? i % 2 ? "#4a443c" : "#232429"
+                          : "#4a443c",
                 kind,
                 size: kind === "sword" ? 3.1 : kind === "ring" ? 6 : 2.4 + Math.random() * 1.4,
               });
@@ -605,7 +606,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.85,
               max: 0.85,
-              color: fxKind === "dawn" || fxKind === "seal" ? "#b13a2c" : "#2c383e",
+              color: fxKind === "dawn" || fxKind === "seal" ? "#7a3a2c" : "#232429",
               kind: "ring",
               size: 14,
             });
@@ -616,7 +617,7 @@ export function WorldCanvas() {
               vy: 0,
               life: 0.55,
               max: 0.55,
-              color: "#b13a2c",
+              color: "#7a3a2c",
               kind: "ring",
               size: 7,
             });
@@ -629,7 +630,7 @@ export function WorldCanvas() {
                 vy: 18 + Math.random() * 28,
                 life: 0.7 + Math.random() * 0.4,
                 max: 1.2,
-                color: i % 4 === 0 ? "#b13a2c" : "#2c383e",
+                color: i % 4 === 0 ? "#7a3a2c" : "#232429",
                 kind: "mote",
                 size: 1.2 + Math.random() * 1.8,
               });
@@ -916,8 +917,8 @@ export function WorldCanvas() {
           def.color === "#a63d32" || def.color === "#6e2a24"
             ? def.color
             : def.projectile === "sword"
-              ? "#46545b"
-              : "#2c383e";
+              ? "#4a443c"
+              : "#232429";
         spawnParticle({
           x: sx,
           y: sy,
@@ -995,7 +996,7 @@ export function WorldCanvas() {
               vy: Math.sin(g.ang) * 20,
               life: 0.45,
               max: 0.45,
-              color: "#b13a2c",
+              color: "#7a3a2c",
               kind: "sword",
               size: 3,
             });
@@ -1062,7 +1063,7 @@ export function WorldCanvas() {
         ctx.save();
         for (let k = 1; k <= 3; k++) {
           ctx.globalAlpha = 0.07 / k;
-          ctx.fillStyle = "#2c383e";
+          ctx.fillStyle = "#232429";
           ctx.beginPath();
           ctx.arc(p.x - face * k * 8 * crane.sc, by + Math.sin(time + crane.ph + k) * 1.5, 1.4 / k, 0, Math.PI * 2);
           ctx.fill();
@@ -1073,7 +1074,7 @@ export function WorldCanvas() {
 
       for (const m of motes) {
         ctx.globalAlpha = 0.14 + 0.1 * Math.sin(time + m.ph);
-        ctx.fillStyle = "#2c383e";
+        ctx.fillStyle = "#232429";
         ctx.beginPath();
         ctx.arc(m.x * w, m.y * h, 1.1, 0, Math.PI * 2);
         ctx.fill();
@@ -1138,7 +1139,7 @@ export function WorldCanvas() {
           ctx.strokeStyle = "rgba(243,238,228,0.85)";
           ctx.lineWidth = 4;
           ctx.strokeText(g.name, x, y - 18);
-          ctx.fillStyle = "#2c383e";
+          ctx.fillStyle = "#232429";
           ctx.fillText(g.name, x, y - 18);
           ctx.restore();
         } else if (g.rarity >= 3) {
@@ -1194,11 +1195,11 @@ export function WorldCanvas() {
         ctx.beginPath();
         ctx.arc(oxp, oyp, pulse + 6, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#b13a2c";
+        ctx.fillStyle = "#7a3a2c";
         ctx.beginPath();
         ctx.arc(oxp, oyp, pulse, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#f2faf6";
+        ctx.fillStyle = "#ece5d2";
         ctx.fillRect(Math.round(oxp) - 1, Math.round(oyp) - 1, 2, 2);
       }
 
@@ -1220,7 +1221,7 @@ export function WorldCanvas() {
           ctx.globalAlpha = a;
           ctx.fillStyle = p.color;
           ctx.fillRect(0, -1, 11, 2);
-          ctx.fillStyle = "#f2faf6";
+          ctx.fillStyle = "#ece5d2";
           ctx.fillRect(9, -2, 3, 4);
           ctx.restore();
         } else if (p.kind === "mote") {
@@ -1250,13 +1251,13 @@ export function WorldCanvas() {
       ctx.strokeStyle = "rgba(28,25,20,0.55)";
       ctx.lineWidth = 4;
       ctx.strokeText(formatNum(Math.max(0, st.layerHp)), cx, cy + R * 0.82);
-      ctx.fillStyle = "#f2faf6";
+      ctx.fillStyle = "#ece5d2";
       ctx.fillText(formatNum(Math.max(0, st.layerHp)), cx, cy + R * 0.82);
 
       ctx.font = "600 13px 'Noto Sans SC', sans-serif";
       for (const f of floaters) {
         ctx.globalAlpha = Math.max(0, f.life);
-        ctx.fillStyle = f.crit ? "#b13a2c" : "#2c383e";
+        ctx.fillStyle = f.crit ? "#7a3a2c" : "#232429";
         ctx.fillText(f.n, f.x, f.y);
         ctx.globalAlpha = 1;
       }

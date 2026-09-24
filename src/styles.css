@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  --color-void: #e9e7de;
-  --color-void-2: #dcd9cf;
-  --color-paper: #faf8f2;
-  --color-paper-2: #f0ede3;
-  --color-ink: #1a1a1a;
-  --color-ink-2: #3a3835;
-  --color-wash: #8a857a;
-  --color-muted: #6e6a60;
-  --color-faint: #a8a29a;
-  --color-seal: #b03a2e;
-  --color-seal-dim: #7e2a22;
-  --color-mist: #d8d4c9;
-  --color-border: #3a3835;
+  --color-void: #e2dcc9;
+  --color-void-2: #d5cdb4;
+  --color-paper: #f2ecdc;
+  --color-paper-2: #e7dfc9;
+  --color-ink: #2e2a26;
+  --color-ink-2: #4a4238;
+  --color-wash: #8d8474;
+  --color-muted: #6f675a;
+  --color-faint: #a89f8d;
+  --color-seal: #4a3428;
+  --color-seal-dim: #33231e;
+  --color-mist: #d8cdb2;
+  --color-border: #4a4238;
   --color-danger: #8a3028;
-  --color-panel: #faf8f2;
-  --color-panel-2: #f0ede3;
-  --color-rose: #b03a2e;
-  --color-rose-dim: #7e2a22;
-  --color-rose-deep: #5c1f1a;
-  --color-cyan: #3a3835;
-  --color-cyan-dim: #6e6a60;
-  --color-jade: #4a453e;
-  --color-gold: #5c564c;
-  --color-gilt: #c9a24b;
+  --color-panel: #f2ecdc;
+  --color-panel-2: #e7dfc9;
+  --color-rose: #7a3a2c;
+  --color-rose-dim: #5c2e26;
+  --color-rose-deep: #42211c;
+  --color-cyan: #4a4238;
+  --color-cyan-dim: #6f675a;
+  --color-jade: #5c4a3a;
+  --color-gold: #8a6f3f;
+  --color-gilt: #d8c690;
 
   --font-display: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
   --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
@@ -87,10 +87,10 @@
 @layer components {
   /* 顶栏细带：一念逍遥式图标+数字成对，浅墨透明统一在宣纸色系 */
   .ink-topbar {
-    background: linear-gradient(180deg, rgba(26,30,32,0.94), rgba(26,30,32,0.78));
+    background: linear-gradient(180deg, rgba(35,32,28,0.94), rgba(35,32,28,0.78));
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(201,162,75,0.35);
+    border-bottom: 1px solid rgba(216,198,144,0.35);
   }
   .topbar-pair {
     display: flex;
@@ -121,7 +121,7 @@
     box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 30%, transparent);
   }
   .topbar-ico.seal {
-    background: radial-gradient(circle at 32% 28%, #c8503f, #8a2b21 72%);
+    background: radial-gradient(circle at 32% 28%, #5c4632, #33231e 72%);
   }
 
   /* 世界跑马灯:深墨胶囊 + 纸色小字,6 秒一条淡入 */
@@ -168,7 +168,7 @@
 
   /* 商品行公式：白卡 + 2px 深灰描边 + 10px 圆角 */
   .shop-row {
-    background: #ffffff;
+    background: #f7f1e2;
     border: 2px solid color-mix(in oklab, var(--color-ink) 68%, transparent);
     border-radius: 10px;
   }
@@ -228,7 +228,7 @@
     min-height: 2.75rem;
     padding: 0.625rem 1.125rem;
     border: 2px solid color-mix(in oklab, var(--color-ink) 72%, transparent);
-    background: #ffffff;
+    background: #f7f1e2;
     color: var(--color-ink);
     border-radius: 10px;
     transition:
@@ -261,7 +261,7 @@
     background: linear-gradient(90deg, #c0392b, #e8752a);
   }
   .meter-blue > i {
-    background: linear-gradient(90deg, #445f9b, #5280b9);
+    background: linear-gradient(90deg, #6b5a44, #a8894f);
   }
   .meter-ink > i {
     background: linear-gradient(90deg, #3a3835, #8a857a);
@@ -341,10 +341,7 @@
     display: flex;
     gap: 6px;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: color-mix(in oklab, var(--color-paper) 90%, transparent);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+    background: transparent;
   }
   .seal-chip {
     position: relative;
@@ -374,22 +371,22 @@
     font-family: var(--font-display);
     font-size: 26px;
     font-weight: 700;
-    color: var(--color-ink-2);
+    color: #f2ecdc;
     background:
-      radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.5), transparent 55%),
-      radial-gradient(circle at 50% 50%, #cfc9bd, #a8a29a 78%);
+      radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.14), transparent 55%),
+      radial-gradient(circle at 50% 50%, #3a352f, #232429 78%);
     box-shadow:
-      inset 0 0 0 1.5px color-mix(in oklab, var(--color-ink) 28%, transparent),
-      0 4px 12px color-mix(in oklab, var(--color-ink) 14%, transparent);
+      inset 0 0 0 1.5px rgba(216, 198, 144, 0.35),
+      0 4px 12px color-mix(in oklab, var(--color-ink) 30%, transparent);
   }
   .seal-chip-on .seal-disc {
-    color: var(--color-paper);
+    color: #e8d9a8;
     background:
-      radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.28), transparent 55%),
-      radial-gradient(circle at 50% 50%, #c8503f, #8a2b21 80%);
+      radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.16), transparent 55%),
+      radial-gradient(circle at 50% 50%, #4a3a2c, #2e2a26 80%);
     box-shadow:
-      inset 0 0 0 1.5px color-mix(in oklab, var(--color-ink) 40%, transparent),
-      0 6px 16px color-mix(in oklab, var(--color-seal) 40%, transparent);
+      inset 0 0 0 2px rgba(216, 198, 144, 0.8),
+      0 6px 16px color-mix(in oklab, var(--color-ink) 40%, transparent);
   }
   .seal-chip-label {
     font-size: 12px;
@@ -397,6 +394,7 @@
     text-indent: 0.14em;
     color: var(--color-ink-2);
     line-height: 1;
+    text-shadow: 0 1px 3px rgba(242,236,220,0.9);
   }
   .seal-chip-on .seal-chip-label {
     color: var(--color-seal);
