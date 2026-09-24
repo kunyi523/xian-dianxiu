@@ -167,7 +167,19 @@ function drawSpriteBuilding(
   if (!img) return; // 缺图已打日志,不绘制
   const size = s * 2; // 逻辑格:与槽位宽度对齐,运行时只做统一 scale
   const feetFromTop = (1560 / 1600) * size; // 脚底在图内距顶 1560px 处
-  ctx.drawImage(img, x - size / 2, y - feetFromTop, size, size);
+  const dx = x - size / 2;
+  const dy = y - feetFromTop;
+  // 洇墨边:模糊本体重影垫底,轮廓如墨洇入纸,不再是硬切贴纸
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.filter = "blur(3px) saturate(0.7) brightness(1.05)";
+  ctx.drawImage(img, dx, dy, size, size);
+  ctx.restore();
+  // 罩染:收饱和度提亮,建筑和背景山用同一套青灰墨色呼吸
+  ctx.save();
+  ctx.filter = "saturate(0.7) brightness(1.05)";
+  ctx.drawImage(img, dx, dy, size, size);
+  ctx.restore();
 }export function perkLine(id: string, lv: number): string {
   if (lv <= 0) return BUILDINGS.find((b) => b.id === id)?.perk ?? "";
   if (id === "hall") return `香火 全山山息 +${(lv * 0.5).toFixed(1)}%`;
@@ -950,6 +962,89 @@ function drawXianqiOverlay(
   ctx.restore();
 }
 
+/** 前景压脚:山石草丛画在建筑底座"前面",把建筑嵌进山里 */
+function drawBaseOverlap(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  s: number,
+  id: string,
+) {
+  // id 做稳定伪随机种子,帧间不闪
+  let h = 7;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const rnd = () => {
+    h = (h * 1103515245 + 12345) >>> 0;
+    return h / 4294967296;
+  };
+  ctx.save();
+  // 两簇山石,一左一右压住底座下沿
+  const rocks: Array<[number, number, number]> = [
+    [-0.48 - rnd() * 0.1, 0.03, 0.2 + rnd() * 0.08],
+    [0.44 + rnd() * 0.1, 0.05, 0.16 + rnd() * 0.07],
+  ];
+  for (const [ox, oy, r] of rocks) {
+    const rx = x + ox * s;
+    const ry = y + oy * s;
+    const rw = r * s;
+    const rh = r * s * 0.45;
+    const pts: Array<[number, number]> = [];
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      const rr = 1 - rnd() * 0.35;
+      pts.push([
+        rx + Math.cos(a) * rw * rr,
+        ry + Math.sin(a) * rh * rr * (Math.sin(a) > 0 ? 0.7 : 1),
+      ]);
+    }
+    const g = ctx.createLinearGradient(0, ry - rh, 0, ry + rh * 0.7);
+    g.addColorStop(0, "rgba(188,203,198,0.78)");
+    g.addColorStop(1, "rgba(108,128,122,0.78)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+    ctx.closePath();
+    // 淡墨晕边:石头如水墨洇开,不再是实色 blob
+    ctx.save();
+    ctx.filter = "blur(1.5px)";
+    ctx.fill();
+    ctx.restore();
+    // 石顶受光:一道淡线,和背景山同一套笔法
+    ctx.strokeStyle = "rgba(242,250,246,0.55)";
+    ctx.lineWidth = Math.max(1, s * 0.014);
+    ctx.beginPath();
+    ctx.moveTo(rx - rw * 0.7, ry - rh * 0.55);
+    ctx.quadraticCurveTo(rx, ry - rh * 1.05, rx + rw * 0.7, ry - rh * 0.5);
+    ctx.stroke();
+    // 皴笔:两三道短线,和背景山同一套笔法
+    ctx.strokeStyle = "rgba(44,56,62,0.35)";
+    ctx.lineWidth = Math.max(1, s * 0.012);
+    for (let k = 0; k < 3; k++) {
+      const sx = rx - rw * 0.5 + rnd() * rw;
+      ctx.beginPath();
+      ctx.moveTo(sx, ry - rh * 0.5);
+      ctx.lineTo(sx + rw * 0.2, ry + rh * 0.1);
+      ctx.stroke();
+    }
+  }
+  // 草丛:几笔出锋,散在底座前
+  ctx.strokeStyle = "rgba(44,56,62,0.5)";
+  ctx.lineWidth = Math.max(1, s * 0.01);
+  ctx.lineCap = "round";
+  for (let k = 0; k < 8; k++) {
+    const gx = x + (rnd() - 0.5) * s * 1.1;
+    const gy = y + s * (0.02 + rnd() * 0.06);
+    const lean = (rnd() - 0.5) * s * 0.1;
+    const gh = s * (0.06 + rnd() * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(gx, gy);
+    ctx.quadraticCurveTo(gx + lean * 0.4, gy - gh * 0.7, gx + lean, gy - gh);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 /** 未解锁槽位:淡色虚印地基。细虚线椭圆地基轮廓,低透明,不抢戏。 */
 function drawGhostFoundation(
   ctx: CanvasRenderingContext2D,
@@ -1057,6 +1152,8 @@ export function drawSiteFx(
     drawBaseMist(ctx, x, y, s);
     // 仙气:建筑绘制之后,低透明 overlay,不遮建筑主体
     drawXianqiOverlay(ctx, x, y, s, t);
+    // 前景压脚:山石草丛盖住底座下沿,建筑嵌进山里
+    drawBaseOverlap(ctx, x, y, s, id);
     ctx.restore();
     return;
   }
