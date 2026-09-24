@@ -223,22 +223,23 @@ export const PEAKS: Peak[] = [
   // hw/hh 按 worldW(=2.4 屏宽)折算,屏上观感与上一版一致。左3栋/右4栋,中央只留劫云+开山香案+瀑布。
   // band0 近劫 · band1 山腰 · band2 山麓
   { id: "main", nx: 0.48, ny: 0.18, hw: 0.16, hh: 0.2, band: 0, z: 0 },
+  // 2026-09-24 放大版:建筑分开后 hw 统一 ×1.5,屏上更醒目;热区/标签随 hw 同步变大。
   // 右上孤峰 → 雷骨塔
-  { id: "tower", nx: 0.885, ny: 0.42, hw: 0.025, hh: 0.048, band: 0, z: 1 },
+  { id: "tower", nx: 0.885, ny: 0.42, hw: 0.0375, hh: 0.048, band: 0, z: 1 },
   // 右中峰 → 望劫镜
-  { id: "mirror", nx: 0.72, ny: 0.475, hw: 0.031, hh: 0.036, band: 0, z: 2 },
+  { id: "mirror", nx: 0.72, ny: 0.475, hw: 0.0465, hh: 0.036, band: 0, z: 2 },
   // 左山腰 → 瀑侧丹灶
-  { id: "alchemy", nx: 0.1, ny: 0.575, hw: 0.025, hh: 0.033, band: 1, z: 0 },
+  { id: "alchemy", nx: 0.1, ny: 0.575, hw: 0.0375, hh: 0.033, band: 1, z: 0 },
   // 左中山腰台地 → 镇峰残纹
-  { id: "array", nx: 0.235, ny: 0.545, hw: 0.036, hh: 0.038, band: 1, z: 1 },
+  { id: "array", nx: 0.235, ny: 0.545, hw: 0.054, hh: 0.038, band: 1, z: 1 },
   // 右山腰 → 龙脉口（洞府入口）
-  { id: "mine", nx: 0.875, ny: 0.615, hw: 0.027, hh: 0.038, band: 1, z: 2 },
+  { id: "mine", nx: 0.875, ny: 0.615, hw: 0.0405, hh: 0.038, band: 1, z: 2 },
   // 左近山丘 → 云阶茅舍
-  { id: "house", nx: 0.09, ny: 0.75, hw: 0.036, hh: 0.033, band: 2, z: 0 },
+  { id: "house", nx: 0.09, ny: 0.75, hw: 0.054, hh: 0.033, band: 2, z: 0 },
   // 中央主建筑 → 开山香案（瀑布上方）
-  { id: "hall", nx: 0.6, ny: 0.665, hw: 0.042, hh: 0.046, band: 2, z: 1 },
+  { id: "hall", nx: 0.6, ny: 0.665, hw: 0.063, hh: 0.046, band: 2, z: 1 },
   // 右近山丘 → 悬剑冢
-  { id: "sword", nx: 0.745, ny: 0.735, hw: 0.029, hh: 0.04, band: 2, z: 2 },
+  { id: "sword", nx: 0.745, ny: 0.735, hw: 0.0435, hh: 0.04, band: 2, z: 2 },
 ];
 
 export const BUILDING_SLOTS: Record<string, { nx: number; ny: number; z: number; band: 0 | 1 | 2; hw: number; hh: number }> =
@@ -1068,6 +1069,56 @@ function drawGhostFoundation(
   ctx.restore();
 }
 
+/** 建筑背后淡墨靠山:两层晕开的山肩 + 一笔山脊勾线,建筑从画里长出来,和背景山同一套青灰 */
+function drawBackHill(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  s: number,
+  id: string,
+) {
+  // id 做稳定伪随机种子,帧间不闪
+  let h = 13;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const rnd = () => {
+    h = (h * 1103515245 + 12345) >>> 0;
+    return h / 4294967296;
+  };
+  ctx.save();
+  const layers: Array<[number, number, number, number, string]> = [
+    // [横向偏移(s), 纵向偏移(s), 半宽(s), 半高(s), 墨色]
+    [-0.1 - rnd() * 0.25, -1.0, 1.05 + rnd() * 0.35, 0.68, "rgba(188,199,203,0.42)"],
+    [0.08 + rnd() * 0.25, -0.78, 0.85 + rnd() * 0.3, 0.55, "rgba(163,177,181,0.5)"],
+  ];
+  for (const [ox, oy, rw, rh, color] of layers) {
+    const cx = x + ox * s;
+    const cy = y + oy * s;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rw * s);
+    g.addColorStop(0, color);
+    g.addColorStop(1, "rgba(188,199,203,0)");
+    ctx.save();
+    // 以山肩中心为原点压扁:径向渐变随之变成椭圆,在边缘恰好淡到透明
+    ctx.translate(cx, cy);
+    ctx.scale(1, rh / rw);
+    ctx.translate(-cx, -cy);
+    ctx.fillStyle = g;
+    ctx.filter = "blur(6px)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, rw * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // 山脊一笔勾线,和背景山同一套笔法
+  ctx.strokeStyle = "rgba(90,104,108,0.35)";
+  ctx.lineWidth = Math.max(1, s * 0.014);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - s * (0.55 + rnd() * 0.2), y - s * 0.35);
+  ctx.quadraticCurveTo(x, y - s * (1.35 + rnd() * 0.25), x + s * (0.55 + rnd() * 0.2), y - s * 0.4);
+  ctx.stroke();
+  ctx.restore();
+}
+
 /** 建筑落地:接地阴影(建筑之前画,压住中间、四周晕开)+ 脚底雾带(建筑之后画,融掉生硬底边) */
 function drawGroundShadow(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
   const shW = s * 0.72;
@@ -1142,6 +1193,7 @@ export function drawSiteFx(
       ctx.restore();
       return;
     }
+    drawBackHill(ctx, x, y, s, id);
     drawGroundShadow(ctx, x, y, s);
     drawSpriteBuilding(ctx, id, x, y, s, tier);
     // 空气透视:远建筑罩一层淡青灰,和背景山呼吸同一种空气;band0 最远最浓
