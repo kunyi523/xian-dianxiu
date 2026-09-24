@@ -976,6 +976,57 @@ function drawGhostFoundation(
   ctx.restore();
 }
 
+/** 建筑落地:接地阴影(建筑之前画,压住中间、四周晕开)+ 脚底雾带(建筑之后画,融掉生硬底边) */
+function drawGroundShadow(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  const shW = s * 0.72;
+  const shH = s * 0.2;
+  ctx.save();
+  ctx.translate(x, y + s * 0.03);
+  ctx.scale(1, shH / shW);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, shW);
+  g.addColorStop(0, "rgba(28,38,42,0.30)");
+  g.addColorStop(0.65, "rgba(28,38,42,0.13)");
+  g.addColorStop(1, "rgba(28,38,42,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, shW, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** 空气透视罩:以建筑为中心的淡青灰柔光,远建筑更浓,和背景山同呼吸 */
+function drawAirHaze(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, band: 0 | 1 | 2) {
+  const a = band === 0 ? 0.17 : band === 1 ? 0.1 : 0.05;
+  const w = s * 1.05;
+  const h = s * 1.1;
+  ctx.save();
+  ctx.translate(x, y - s * 0.8);
+  ctx.scale(1, h / w);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w);
+  g.addColorStop(0, `rgba(229,239,243,${a})`);
+  g.addColorStop(1, "rgba(229,239,243,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, w, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBaseMist(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {  const mW = s * 0.88;
+  const mH = s * 0.15;
+  ctx.save();
+  ctx.translate(x, y - s * 0.01);
+  ctx.scale(1, mH / mW);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, mW);
+  g.addColorStop(0, "rgba(236,243,245,0.22)");
+  g.addColorStop(1, "rgba(236,243,245,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, mW, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 export function drawSiteFx(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -985,6 +1036,7 @@ export function drawSiteFx(
   id?: string,
   scale = 56,
   ruined = false,
+  band: 0 | 1 | 2 = 2,
 ) {
   const tier = ruined ? 0 : buildingTier(lv);
   const s = Math.max(28, scale);
@@ -998,7 +1050,11 @@ export function drawSiteFx(
       ctx.restore();
       return;
     }
+    drawGroundShadow(ctx, x, y, s);
     drawSpriteBuilding(ctx, id, x, y, s, tier);
+    // 空气透视:远建筑罩一层淡青灰,和背景山呼吸同一种空气;band0 最远最浓
+    drawAirHaze(ctx, x, y, s, band);
+    drawBaseMist(ctx, x, y, s);
     // 仙气:建筑绘制之后,低透明 overlay,不遮建筑主体
     drawXianqiOverlay(ctx, x, y, s, t);
     ctx.restore();
