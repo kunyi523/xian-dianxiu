@@ -9,7 +9,6 @@ import {
   drawCultivator,
   drawDistantPeaks,
   drawForeground,
-  drawPath,
   drawPeaks,
   drawProceduralBuilding,
   drawSiteFx,
@@ -18,10 +17,6 @@ import {
   drawTribCloud,
   drawUpgradeBurst,
   drawWaterfall,
-  pathCornerNear,
-  pathPoint,
-  pathSteepAt,
-  PATH_COUNT,
   setInkAssetBase,
   slotXY,
   stampStates,
@@ -109,7 +104,6 @@ type Particle = {
   size: number;
 };
 type Floater = { x: number; y: number; n: string; life: number; crit: boolean };
-type Walker = { s: number; sp: number; v: number; bob: number; path: number; jitter: number; pause: number };
 type Orb = { a: number; life: number };
 type Bolt = { pts: { x: number; y: number }[]; branches: { x: number; y: number }[][]; life: number };
 type Guest = {
@@ -140,7 +134,6 @@ export function WorldCanvas() {
 
     const particles: Particle[] = [];
     const floaters: Floater[] = [];
-    const walkers: Walker[] = [];
     const guests: Guest[] = [];
     let orb: Orb | null = null;
     let trauma = 0;
@@ -191,20 +184,6 @@ export function WorldCanvas() {
       ph: Math.random() * 10,
     }));
 
-    // 每位弟子固定一条山路(i % 3),沿 waypoint 来回行走,不再随机乱走
-    const makeWalker = (i: number): Walker => ({
-      s: Math.random(),
-      // 略慢,陡段再乘 pathSteepAt
-      sp: (Math.random() * 0.042 + 0.016) * (Math.random() < 0.5 ? 1 : -1) * (0.85 + Math.random() * 0.3),
-      v: i % 6,
-      bob: Math.random() * 10,
-      path: i % PATH_COUNT,
-      jitter: 0.4 + Math.random() * 0.85,
-      pause: Math.random() * 0.6,
-    });
-    for (let i = 0; i < 8; i++) {
-      walkers.push(makeWalker(i));
-    }
 
     const spawnParticle = (p: Particle) => {
       if (particles.length > 200) particles.shift();
@@ -855,17 +834,6 @@ export function WorldCanvas() {
       }
     };
 
-    const paintWalkers = (minNy: number, maxNy: number) => {
-      const w = cssW;
-      const h = cssH;
-      for (const wk of walkers) {
-        const p = pathPoint(wk.s, w, h, blit, wk.path, wk.jitter);
-        const ny = p.y / h;
-        if (ny < minNy || ny >= maxNy) continue;
-        const sc = 0.72 + ny * 0.28;
-        drawCultivator(ctx, p.x, p.y, wk.v, time + wk.bob, sc, wk.sp >= 0 ? 1 : -1);
-      }
-    };
 
     let raf = 0;
     let pageVisible = typeof document !== "undefined" ? !document.hidden : true;
@@ -928,14 +896,6 @@ export function WorldCanvas() {
         lastDpsAt = now;
       }
       const dps = cachedDps;
-      const targetWalkers = Math.min(
-        18,
-        3 + Math.floor((st.disciples.length + Object.values(st.buildings).reduce((a, b) => a + (b > 0 ? 1 : 0), 0)) * 0.6),
-      );
-      while (walkers.length < targetWalkers) {
-        walkers.push(makeWalker(walkers.length));
-      }
-      while (walkers.length > targetWalkers) walkers.pop();
 
       const { cx, cy, R } = tribCenter(w, h, blit);
 
@@ -1039,31 +999,6 @@ export function WorldCanvas() {
         });
       }
 
-      for (const wk of walkers) {
-        if (wk.pause > 0) {
-          wk.pause -= dt;
-          continue;
-        }
-        const steep = pathSteepAt(wk.s, wk.path);
-        // 陡阶减速；平台略恢复
-        const speedMul = Math.max(0.32, 1 - steep * 0.58);
-        wk.s += wk.sp * dt * speedMul;
-        if (wk.s > 1) {
-          wk.s = 1;
-          wk.sp *= -1;
-          wk.pause = 0.35 + Math.random() * 0.7;
-        } else if (wk.s < 0) {
-          wk.s = 0;
-          wk.sp *= -1;
-          wk.pause = 0.35 + Math.random() * 0.7;
-        } else {
-          // 折点偶停，像贴阶喘息
-          const corner = pathCornerNear(wk.s, wk.path);
-          if (corner > 0.55 && Math.random() < dt * (0.55 + corner * 0.9)) {
-            wk.pause = 0.35 + Math.random() * 1.05;
-          }
-        }
-      }
 
       const ownedIds = new Set(st.disciples.map((d) => d.id));
       for (let i = guests.length - 1; i >= 0; i--) {
@@ -1193,25 +1128,20 @@ export function WorldCanvas() {
         drawDistantPeaks(ctx, w, h);
         drawPeaks(ctx, w, h, 0);
       }
-      // 山间石径：始终绘制，弟子行走的路看得见
-      drawPath(ctx, w, h, blit);
       drawTribCloud(ctx, cx, cy, R * (1.18 + vortexPulse * 0.07), vortexPulse, time);
 
       paintBuildings(0, st, painted);
-      paintWalkers(0, 0.4);
 
       if (!painted) {
         drawPeaks(ctx, w, h, 1);
         drawWaterfall(ctx, w, h, time);
       }
       paintBuildings(1, st, painted);
-      paintWalkers(0.4, 0.62);
 
       if (!painted) {
         drawPeaks(ctx, w, h, 2);
       }
       paintBuildings(2, st, painted);
-      paintWalkers(0.62, 1.1);
       if (!painted) {
         drawBandMist(ctx, w, h, 2);
         drawForeground(ctx, w, h);

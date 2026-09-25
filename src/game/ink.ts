@@ -765,15 +765,45 @@ export function drawTribCloud(
   ctx.ellipse(cx, cy + s * 0.05, s * 2.35, s * 1.15, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 劫云主体:六帧 PNG(jielei_f1..f6 雷劫云),pulse 只调尺寸与透明
-  const fx = fxImg("jielei", Math.floor(t * 6) % 6 + 1);
-  if (fx) {
-    const fs = s * (4.7 + pulse * 0.18); // PNG 全帧即云团,按原洗染范围对齐
-    ctx.globalAlpha = 0.97;
-    ctx.drawImage(fx, cx - fs / 2, cy - fs / 2 + s * 0.05, fs, fs);
-    ctx.globalAlpha = 1;
+  // 劫云主体:水墨云团——与母卷同一片天的天气层,不再用写实雷云 PNG
+  // 深浅三层淡墨团 + 云纹勾线,边缘羽化,随 pulse 呼吸
+  const blobs: [number, number, number, number, number][] = [
+    // dx, dy, rx, ry, alpha(相对 s)
+    [0, 0.02, 1.55, 0.62, 0.3],
+    [-0.78, 0.1, 0.92, 0.46, 0.24],
+    [0.82, 0.08, 1.02, 0.5, 0.24],
+    [-0.22, -0.24, 1.12, 0.42, 0.2],
+    [0.36, -0.2, 0.82, 0.36, 0.18],
+    [0.02, 0.3, 1.22, 0.4, 0.16],
+  ];
+  for (const [dx, dy, rx, ry, a] of blobs) {
+    const bx = cx + dx * s;
+    const by = cy + dy * s;
+    const rr = Math.max(rx, ry) * s;
+    const bg = radialCached(ctx, `tcloud:${gk}:${dx},${dy}`, bx, by, 0, bx, by, rr, [
+      [0, `${PAL.inkFaint}${Math.min(0.5, a + pq * 0.06)})`],
+      [0.62, `${PAL.inkFaint}${a * 0.45})`],
+      [1, `${PAL.inkFaint}0)`],
+    ]);
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.ellipse(bx, by, rx * s, ry * s, dx * 0.1, 0, Math.PI * 2);
+    ctx.fill();
   }
-  // 缺图只打日志(见 fxImg):不绘制矢量主体,不做 fallback
+  // 云纹勾线:淡墨两笔,云有走势
+  ctx.strokeStyle = `${PAL.inkFaint}0.14)`;
+  ctx.lineWidth = Math.max(1, s * 0.022);
+  ctx.lineCap = "round";
+  for (const [sx, sy, ex, ey, bend] of [
+    [-1.1, -0.08, 0.1, -0.14, -0.22],
+    [0.15, -0.12, 1.25, -0.02, -0.18],
+    [-0.7, 0.22, 0.7, 0.26, 0.2],
+  ] as [number, number, number, number, number][]) {
+    ctx.beginPath();
+    ctx.moveTo(cx + sx * s, cy + sy * s);
+    ctx.quadraticCurveTo(cx + ((sx + ex) / 2) * s, cy + ((sy + ey) / 2 + bend) * s, cx + ex * s, cy + ey * s);
+    ctx.stroke();
+  }
   // 软朱砂印心（非硬红点）
   const sealR = sq * (0.22 + pq * 0.12);
   const seal = radialCached(
