@@ -229,15 +229,17 @@ export function WorldCanvas() {
     let mountainOk = false;
     // 融合块:建筑已画死进背景块,随背景同一套变换叠上去(真融合路线)
     // 区域为背景像素坐标(4500×1932),块与块互不重叠;tiers=该建筑融合块档数
+    // 背景融合片区:每块都是从背景大图上精确裁下的区域,建筑已画进该区域山水里;
+    // 坐标为背景像素坐标(4500×1932),绘制时与背景同一套变换,边缘羽化,无拼贴感
     const FUSED_BLOCKS = [
-      { id: "tower", sx: 2835, sy: 239, sw: 450, sh: 450, tiers: 4 },
-      { id: "mirror", sx: 3595, sy: 586, sw: 450, sh: 450, tiers: 4 },
-      { id: "mine", sx: 3312, sy: 1307, sw: 450, sh: 450, tiers: 4 },
-      { id: "sword", sx: 3555, sy: 805, sw: 450, sh: 450, tiers: 4 },
-      { id: "hall", sx: 2332, sy: 676, sw: 600, sh: 600, tiers: 4 },
-      { id: "alchemy", sx: 1183, sy: 706, sw: 450, sh: 450, tiers: 4 },
-      { id: "array", sx: 3168, sy: 270, sw: 450, sh: 450, tiers: 4 },
-      { id: "house", sx: 2340, sy: 1475, sw: 450, sh: 450, tiers: 4 },
+      { id: "tower", sx: 2694, sy: 0, sw: 738, sh: 574, tiers: 4 },
+      { id: "mirror", sx: 3166, sy: 242, sw: 738, sh: 738, tiers: 4 },
+      { id: "mine", sx: 3172, sy: 904, sw: 738, sh: 738, tiers: 4 },
+      { id: "sword", sx: 659, sy: 435, sw: 738, sh: 738, tiers: 4 },
+      { id: "hall", sx: 2263, sy: 348, sw: 738, sh: 738, tiers: 2 },
+      { id: "alchemy", sx: 1035, sy: 303, sw: 738, sh: 738, tiers: 4 },
+      { id: "array", sx: 3028, sy: 0, sw: 738, sh: 605, tiers: 4 },
+      { id: "house", sx: 2195, sy: 1072, sw: 738, sh: 738, tiers: 4 },
     ];
     const FUSED_IDS = new Set(FUSED_BLOCKS.map((b) => b.id));
     const fusedImgs = new Map<string, HTMLImageElement>();
@@ -246,7 +248,7 @@ export function WorldCanvas() {
         const key = `${b.id}_t${t}`;
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = assetUrl(`bg/fused_block/${key}.png?v=3`);
+        img.src = assetUrl(`bg/patches/${key}.webp?v=1`);
         fusedImgs.set(key, img);
       }
     }
@@ -339,8 +341,9 @@ export function WorldCanvas() {
       const bd = useGame.getState().buildings;
       for (const b of FUSED_BLOCKS) {
         const lv = bd[b.id] ?? 0;
-        // 0级画废墟补丁(t0),1-4级画对应补丁;母图对应位置是空山,不画t1概念
-        const tier = lv <= 0 ? 0 : Math.min(buildingTier(lv), b.tiers);
+        // 未解锁不画片区(该处即为空山);1-4级画对应融合片区
+        if (lv <= 0) continue;
+        const tier = Math.min(buildingTier(lv), b.tiers);
         const img = fusedImgs.get(`${b.id}_t${tier}`);
         if (!img || img.naturalWidth === 0) continue;
         ctx.drawImage(
