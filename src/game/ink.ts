@@ -232,13 +232,13 @@ export const PEAKS: Peak[] = [
   // 2026-09-25 整图版:建筑直接画进背景,PEAKS 只定标签/热区/虚印位;nx 按 WORLD_K=3.6 折算。
   { id: "main", nx: 0.5, ny: 0.18, hw: 0.16, hh: 0.2, band: 0, z: 0 },
   { id: "tower", nx: 0.753, ny: 0.24, hw: 0.045, hh: 0.045, band: 0, z: 1 },
-  { id: "mirror", nx: 0.99, ny: 0.42, hw: 0.045, hh: 0.045, band: 0, z: 2 },
+  { id: "mirror", nx: 0.90, ny: 0.45, hw: 0.045, hh: 0.045, band: 0, z: 2 },
   { id: "alchemy", nx: 0.237, ny: 0.482, hw: 0.045, hh: 0.045, band: 1, z: 0 },
   { id: "array", nx: 0.857, ny: 0.256, hw: 0.045, hh: 0.045, band: 0, z: 1 },
   { id: "mine", nx: 0.902, ny: 0.793, hw: 0.045, hh: 0.045, band: 2, z: 0 },
   { id: "house", nx: 0.598, ny: 0.88, hw: 0.045, hh: 0.045, band: 2, z: 0 },
   { id: "hall", nx: 0.619, ny: 0.505, hw: 0.055, hh: 0.055, band: 1, z: 1 },
-  { id: "sword", nx: 0.978, ny: 0.533, hw: 0.045, hh: 0.045, band: 1, z: 2 },
+  { id: "sword", nx: 0.12, ny: 0.55, hw: 0.045, hh: 0.045, band: 1, z: 2 },
 ];
 
 export const BUILDING_SLOTS: Record<string, { nx: number; ny: number; z: number; band: 0 | 1 | 2; hw: number; hh: number }> =
