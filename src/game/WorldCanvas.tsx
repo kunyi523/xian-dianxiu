@@ -234,7 +234,7 @@ export function WorldCanvas() {
       { id: "mirror", sx: 3595, sy: 586, sw: 450, sh: 450, tiers: 4 },
       { id: "mine", sx: 3312, sy: 1307, sw: 450, sh: 450, tiers: 4 },
       { id: "sword", sx: 3555, sy: 805, sw: 450, sh: 450, tiers: 4 },
-      { id: "hall", sx: 2332, sy: 676, sw: 600, sh: 600, tiers: 3 },
+      { id: "hall", sx: 2332, sy: 676, sw: 600, sh: 600, tiers: 4 },
       { id: "alchemy", sx: 1183, sy: 706, sw: 450, sh: 450, tiers: 4 },
       { id: "array", sx: 3168, sy: 270, sw: 450, sh: 450, tiers: 4 },
       { id: "house", sx: 2340, sy: 1475, sw: 450, sh: 450, tiers: 4 },
@@ -242,11 +242,11 @@ export function WorldCanvas() {
     const FUSED_IDS = new Set(FUSED_BLOCKS.map((b) => b.id));
     const fusedImgs = new Map<string, HTMLImageElement>();
     for (const b of FUSED_BLOCKS) {
-      for (let t = 1; t <= b.tiers; t++) {
+      for (let t = 0; t <= b.tiers; t++) {
         const key = `${b.id}_t${t}`;
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.src = assetUrl(`bg/fused_block/${key}.png?v=1`);
+        img.src = assetUrl(`bg/fused_block/${key}.png?v=3`);
         fusedImgs.set(key, img);
       }
     }
@@ -339,8 +339,8 @@ export function WorldCanvas() {
       const bd = useGame.getState().buildings;
       for (const b of FUSED_BLOCKS) {
         const lv = bd[b.id] ?? 0;
-        if (lv <= 0) continue;
-        const tier = Math.min(buildingTier(lv), b.tiers);
+        // 0级画废墟补丁(t0),1-4级画对应补丁;母图对应位置是空山,不画t1概念
+        const tier = lv <= 0 ? 0 : Math.min(buildingTier(lv), b.tiers);
         const img = fusedImgs.get(`${b.id}_t${tier}`);
         if (!img || img.naturalWidth === 0) continue;
         ctx.drawImage(
@@ -833,7 +833,8 @@ export function WorldCanvas() {
         const p = slotXY(slot.nx, slot.ny, w, h, blit);
         const s = blit ? blit.dw * slot.hw : 56;
         if (lv <= 0) {
-          // 未解锁:淡色虚印地基(从无到有的起点),不再画废墟;纯矢量,不依赖贴图
+          // 未解锁:融合点已画t0废墟补丁,不再画虚印地基;非融合点才画虚印
+          if (FUSED_IDS.has(def.id)) continue;
           drawSiteFx(ctx, p.x, p.y, 0, time, def.id, s, false, band);
           continue;
         }
