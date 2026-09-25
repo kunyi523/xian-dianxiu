@@ -3,6 +3,7 @@ import { BUILDINGS, DISCIPLES } from "./data";
 import {
   BUILDING_SLOTS,
   buildingsInBand,
+  buildingTier,
   drawBandMist,
   drawCraneFly,
   drawCultivator,
@@ -224,6 +225,29 @@ export function WorldCanvas() {
     // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
     mountain.src = assetUrl("bg/bg_panorama.jpg?v=5");
     let mountainOk = false;
+    // 融合块:建筑已画死进背景块,随背景同一套变换叠上去(真融合路线)
+    // 区域为背景像素坐标(4500×1932),块与块互不重叠;tiers=该建筑融合块档数
+    const FUSED_BLOCKS = [
+      { id: "tower", sx: 2986, sy: 393, sw: 450, sh: 450, tiers: 4 },
+      { id: "mirror", sx: 2772, sy: 799, sw: 450, sh: 450, tiers: 4 },
+      { id: "mine", sx: 3029, sy: 1205, sw: 450, sh: 450, tiers: 4 },
+      { id: "sword", sx: 2452, sy: 1340, sw: 450, sh: 450, tiers: 4 },
+      { id: "hall", sx: 2163, sy: 782, sw: 600, sh: 600, tiers: 3 },
+      { id: "alchemy", sx: 1214, sy: 838, sw: 450, sh: 450, tiers: 4 },
+      { id: "array", sx: 1662, sy: 722, sw: 450, sh: 450, tiers: 4 },
+      { id: "house", sx: 1086, sy: 1282, sw: 450, sh: 450, tiers: 4 },
+    ];
+    const FUSED_IDS = new Set(FUSED_BLOCKS.map((b) => b.id));
+    const fusedImgs = new Map<string, HTMLImageElement>();
+    for (const b of FUSED_BLOCKS) {
+      for (let t = 1; t <= b.tiers; t++) {
+        const key = `${b.id}_t${t}`;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = assetUrl(`bg/fused_block/${key}.png?v=1`);
+        fusedImgs.set(key, img);
+      }
+    }
     let blit: Blit | null = null;
     // Offscreen cache: avoid drawImage-ing the ~0.9MB JPG every rAF
     let mountainCache: HTMLCanvasElement | null = null;
@@ -306,6 +330,24 @@ export function WorldCanvas() {
         ctx.drawImage(cache, dx, dy, dw, dh);
       } else {
         ctx.drawImage(base, dx, dy, dw, dh);
+      }
+      // 融合块:按当前 tier 叠对应块,建筑已画死在块里
+      const bw = base.naturalWidth;
+      const bh = base.naturalHeight;
+      const bd = useGame.getState().buildings;
+      for (const b of FUSED_BLOCKS) {
+        const lv = bd[b.id] ?? 0;
+        if (lv <= 0) continue;
+        const tier = Math.min(buildingTier(lv), b.tiers);
+        const img = fusedImgs.get(`${b.id}_t${tier}`);
+        if (!img || img.naturalWidth === 0) continue;
+        ctx.drawImage(
+          img,
+          dx + (b.sx * dw) / bw,
+          dy + (b.sy * dh) / bh,
+          (b.sw * dw) / bw,
+          (b.sh * dh) / bh,
+        );
       }
       return true;
     };
@@ -781,8 +823,11 @@ export function WorldCanvas() {
         if (fl > 0) drawUpgradeBurst(ctx, p.x, p.y, Math.min(1, fl), !!buildingTierUp[def.id]);
         ctx.save();
         if (fl > 0) ctx.globalAlpha = 0.88 + Math.min(1, fl) * 0.12;
-        if (painted) drawSiteFx(ctx, p.x, p.y, lv, time, def.id, s, false, band);
-        else drawProceduralBuilding(ctx, def, p.x, p.y, lv, time);
+        // 有融合块的建筑已画死在块里,不再画 sprite(真融合路线)
+        if (painted) {
+          if (!(lv > 0 && FUSED_IDS.has(def.id)))
+            drawSiteFx(ctx, p.x, p.y, lv, time, def.id, s, false, band);
+        } else drawProceduralBuilding(ctx, def, p.x, p.y, lv, time);
         ctx.restore();
         drawBuildingLabel(ctx, def.id, def.name, p.x, p.y, time);
       }
