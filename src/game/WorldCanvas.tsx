@@ -223,19 +223,19 @@ export function WorldCanvas() {
     const mountain = new Image();
     mountain.crossOrigin = "anonymous";
     // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
-    mountain.src = assetUrl("bg/bg_panorama.jpg?v=6");
+    mountain.src = assetUrl("bg/bg_panorama.jpg?v=7");
     let mountainOk = false;
     // 融合块:建筑已画死进背景块,随背景同一套变换叠上去(真融合路线)
     // 区域为背景像素坐标(4500×1932),块与块互不重叠;tiers=该建筑融合块档数
     const FUSED_BLOCKS = [
-      { id: "tower", sx: 3025, sy: 225, sw: 450, sh: 450, tiers: 4 },
-      { id: "mirror", sx: 2905, sy: 925, sw: 450, sh: 450, tiers: 4 },
-      { id: "mine", sx: 2975, sy: 1375, sw: 450, sh: 450, tiers: 4 },
-      { id: "sword", sx: 1825, sy: 1355, sw: 450, sh: 450, tiers: 4 },
-      { id: "hall", sx: 2300, sy: 850, sw: 600, sh: 600, tiers: 3 },
-      { id: "alchemy", sx: 1525, sy: 1025, sw: 450, sh: 450, tiers: 4 },
-      { id: "array", sx: 1825, sy: 625, sw: 450, sh: 450, tiers: 4 },
-      { id: "house", sx: 1125, sy: 1425, sw: 450, sh: 450, tiers: 4 },
+      { id: "tower", sx: 2835, sy: 239, sw: 450, sh: 450, tiers: 4 },
+      { id: "mirror", sx: 3595, sy: 586, sw: 450, sh: 450, tiers: 4 },
+      { id: "mine", sx: 3312, sy: 1307, sw: 450, sh: 450, tiers: 4 },
+      { id: "sword", sx: 3555, sy: 805, sw: 450, sh: 450, tiers: 4 },
+      { id: "hall", sx: 2332, sy: 676, sw: 600, sh: 600, tiers: 3 },
+      { id: "alchemy", sx: 1183, sy: 706, sw: 450, sh: 450, tiers: 4 },
+      { id: "array", sx: 3168, sy: 270, sw: 450, sh: 450, tiers: 4 },
+      { id: "house", sx: 2340, sy: 1475, sw: 450, sh: 450, tiers: 4 },
     ];
     const FUSED_IDS = new Set(FUSED_BLOCKS.map((b) => b.id));
     const fusedImgs = new Map<string, HTMLImageElement>();
@@ -270,14 +270,14 @@ export function WorldCanvas() {
     const drag = { on: false, moved: false, x: 0, y: 0, lx: 0 };
 
     const LANDINGS = [
-      { nx: 0.16, ny: 0.72 },
-      { nx: 0.8, ny: 0.66 },
-      { nx: 0.5, ny: 0.6 },
-      { nx: 0.65, ny: 0.7 },
-      { nx: 0.45, ny: 0.72 },
-      { nx: 0.55, ny: 0.72 },
-      { nx: 0.3, ny: 0.74 },
-      { nx: 0.7, ny: 0.74 },
+      { nx: 0.15, ny: 0.6 },
+      { nx: 0.35, ny: 0.42 },
+      { nx: 0.55, ny: 0.62 },
+      { nx: 0.72, ny: 0.62 },
+      { nx: 0.8, ny: 0.5 },
+      { nx: 0.88, ny: 0.64 },
+      { nx: 0.75, ny: 0.88 },
+      { nx: 0.95, ny: 0.9 },
     ];
 
     /** 单张空山底图:尺寸变才重建离屏 */
