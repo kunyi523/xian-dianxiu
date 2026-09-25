@@ -42,7 +42,7 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: "house",
-    name: "云阶茅舍",
+    name: "听松庐",
     sprite: "house",
     flavor: "山麓入山口。灯一盏盏亮起，便有人替你守夜开光。",
     perk: "人潮：缓慢香火自燃，并多开云游槽",
@@ -55,7 +55,7 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: "sword",
-    name: "悬剑冢",
+    name: "葬剑崖",
     sprite: "sword",
     flavor: "右脊插满旧剑。剑醒之后，自行出鞘绕峰。",
     perk: "剑鸣：悬剑冢、镇峰残纹额外增幅",
@@ -68,7 +68,7 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: "array",
-    name: "镇峰残纹",
+    name: "镇岳碑",
     sprite: "array",
     flavor: "山左残台。一笔一笔补回阵纹，峰才肯稳住。",
     perk: "阵眼：镇峰残纹山息随等级提升",
@@ -81,7 +81,7 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: "mine",
-    name: "龙脉口",
+    name: "潜龙渊",
     sprite: "mine",
     flavor: "山腹脉眼。疏通之后，脉晶自己往外渗。",
     perk: "脉晶：挂机渗出灵矿",
@@ -94,7 +94,7 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: "tower",
-    name: "雷骨塔",
+    name: "雷音塔",
     sprite: "tower",
     flavor: "近峰木骨。雷纹一接，指尖开光带神雷。",
     perk: "神雷：强化指尖开光",
@@ -107,7 +107,7 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: "mirror",
-    name: "望劫镜",
+    name: "观劫台",
     sprite: "mirror",
     flavor: "崖上旧镜正对劫云。擦亮了，仙果来得勤。",
     perk: "望劫：开光增强，仙果更频",
@@ -120,7 +120,7 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: "alchemy",
-    name: "瀑侧丹灶",
+    name: "丹鼎阁",
     sprite: "alchemy",
     flavor: "瀑边土灶。炉烟一起，灵草便顺水滴下。",
     perk: "丹烟：挂机渗出灵草",
