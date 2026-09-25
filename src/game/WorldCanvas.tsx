@@ -144,6 +144,8 @@ export function WorldCanvas() {
     const guests: Guest[] = [];
     let orb: Orb | null = null;
     let trauma = 0;
+    let hitStop = 0; // game-feel: 分层顿帧(秒),暴击0.06/破境0.12/转生0.15
+    let frameNo = 0; // performance:Sheet打开时隔帧渲染计数
     let time = 0;
     let last = performance.now();
     let acc = 0;
@@ -359,6 +361,7 @@ export function WorldCanvas() {
         const x = e.x * w;
         const y = e.y * h;
         trauma = Math.min(1, trauma + (e.crit ? 0.2 : 0.1));
+        if (e.crit) hitStop = Math.max(hitStop, 0.06);
         if (e.crit) pulseVibrate(12);
         vortexPulse = 1;
         // 更利落的墨点/笔触环：略快扩散、略短寿命
@@ -391,7 +394,7 @@ export function WorldCanvas() {
         });
         floaters.push({
           x,
-          y,
+          y: y - 24, // input-systems:飘字起点上移,不被手指挡住
           n: (e.crit ? "暴 " : "+") + formatNum(e.n),
           life: 0.9,
           crit: e.crit,
@@ -399,6 +402,7 @@ export function WorldCanvas() {
         if (floaters.length > 18) floaters.shift();
       } else if (e.t === "layer") {
         trauma = Math.min(1, trauma + 0.65);
+        hitStop = Math.max(hitStop, 0.12);
         flash = 0.4;
         pendingBolt = true; // 破境：劫云降下一道大雷
         pulseVibrate(18);
@@ -493,6 +497,7 @@ export function WorldCanvas() {
         if (floaters.length > 18) floaters.shift();
       } else if (e.t === "prestige") {
         flash = 0.7;
+        hitStop = Math.max(hitStop, 0.15);
         trauma = 1;
         pulseVibrate(22);
       } else if (e.t === "gacha") {
@@ -750,6 +755,19 @@ export function WorldCanvas() {
       drag.x = ev.clientX;
       drag.y = ev.clientY;
       drag.lx = ev.clientX;
+      // game-feel:按下即给视觉反馈(<100ms),不等pointerup的逻辑确认;纯视觉,不改逻辑
+      const rect = canvas.getBoundingClientRect();
+      spawnParticle({
+        x: ((ev.clientX - rect.left) / rect.width) * cssW,
+        y: ((ev.clientY - rect.top) / rect.height) * cssH,
+        vx: 0,
+        vy: 0,
+        life: 0.22,
+        max: 0.22,
+        color: "#232429",
+        kind: "ring",
+        size: 5,
+      });
     };
     const onPointerMove = (ev: PointerEvent) => {
       if (!drag.on) return;
@@ -873,14 +891,20 @@ export function WorldCanvas() {
 
     const tickFrame = (now: number) => {
       if (!running) return;
-      let dt = (now - last) / 1000;
+      const rawDt = (now - last) / 1000;
       last = now;
-      dt = Math.min(dt, 0.1);
+      // hit-stop:顿帧期间时间缩放,不碰逻辑tick(逻辑仍按固定步进)
+      if (hitStop > 0) hitStop = Math.max(0, hitStop - rawDt);
+      let dt = Math.min(rawDt, 0.1);
+      if (hitStop > 0) dt *= 0.3;
       acc += dt;
       while (acc >= 1 / 30) {
         useGame.getState().tick(1 / 30);
         acc -= 1 / 30;
       }
+      frameNo++;
+      // performance:Sheet打开时渲染降到30fps,逻辑tick不停(挂机收益继续)
+      const renderThis = !useGame.getState().tab || frameNo % 2 === 1;
       time += dt;
       trauma = Math.max(0, trauma - dt * 1.8);
       flash = Math.max(0, flash - dt * 1.6);
@@ -1123,6 +1147,7 @@ export function WorldCanvas() {
       }
 
       const shake = trauma * trauma;
+      if (renderThis) {
       const ox = st.shakeOn ? Math.sin(time * 38) * 5 * shake : 0;
       const oy = st.shakeOn ? Math.cos(time * 31) * 4 * shake : 0;
       const dpr = canvas.width / Math.max(1, w);
@@ -1336,6 +1361,12 @@ export function WorldCanvas() {
       ctx.font = "600 13px 'Noto Sans SC', sans-serif";
       for (const f of floaters) {
         ctx.globalAlpha = Math.max(0, f.life);
+        if (f.crit) {
+          // game-feel:暴击飘字描边提层级,乱点中一眼可辨
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "rgba(236,229,210,0.9)";
+          ctx.strokeText(f.n, f.x, f.y);
+        }
         ctx.fillStyle = f.crit ? "#7a3a2c" : "#232429";
         ctx.fillText(f.n, f.x, f.y);
         ctx.globalAlpha = 1;
@@ -1350,6 +1381,7 @@ export function WorldCanvas() {
         ctx.fillStyle = `rgba(235,244,252,${boltFlash * 0.5})`;
         ctx.fillRect(-4, -4, w + 8, h + 8);
       }
+      } // renderThis
     };
     raf = requestAnimationFrame(tick);
 

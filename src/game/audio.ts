@@ -3,6 +3,8 @@
 let ctx: AudioContext | null = null;
 let enabled = true;
 let noiseBuf: AudioBuffer | null = null;
+/** 总线：所有合成音先经 master 再出，静音可立即切断在播声音 */
+let master: GainNode | null = null;
 
 function ac(): AudioContext | null {
   if (!enabled) return null;
@@ -10,6 +12,9 @@ function ac(): AudioContext | null {
     const C = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!C) return null;
     ctx = new C();
+    master = ctx.createGain();
+    master.gain.value = 1;
+    master.connect(ctx.destination);
   }
   if (ctx.state === "suspended") void ctx.resume();
   return ctx;
@@ -17,6 +22,10 @@ function ac(): AudioContext | null {
 
 export function setSfxEnabled(v: boolean) {
   enabled = v;
+  // 立即拉总线，正在播放的余韵也一并静音/恢复
+  if (ctx && master) {
+    master.gain.setTargetAtTime(v ? 1 : 0, ctx.currentTime, 0.02);
+  }
 }
 
 function noise(c: AudioContext): AudioBuffer {
@@ -53,7 +62,7 @@ function tone(
   g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t0 + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g);
-  g.connect(c.destination);
+  g.connect(master ?? c.destination);
   o.start(t0);
   o.stop(t0 + dur + 0.03);
 }
@@ -99,7 +108,7 @@ function burst(
     node = lp;
   }
   node.connect(g);
-  g.connect(c.destination);
+  g.connect(master ?? c.destination);
   src.start(t0);
   src.stop(t0 + dur + 0.02);
 }

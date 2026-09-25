@@ -178,7 +178,8 @@
   }
   .shop-row-locked .shop-row-name,
   .shop-row-locked .shop-row-sub {
-    color: #5c5a55 !important;
+    color: #3f3b36 !important;
+    font-weight: 600;
   }
 
   /* 分区墨线：一笔横墨线 + 居中书法小标题 */
@@ -441,8 +442,9 @@
   .band-head {
     font-family: var(--font-display);
     font-size: 14px;
+    font-weight: 600;
     letter-spacing: 0.18em;
-    color: var(--color-wash);
+    color: var(--color-muted);
     margin: 16px 0 10px;
     padding-left: 2px;
   }
