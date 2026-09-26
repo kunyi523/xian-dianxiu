@@ -1,0 +1,19 @@
+name: mountain-lock
+
+# 山锁: 母卷字节 + 关键常量, 合进 game 或打 live-mountain-v* tag 才卡死
+# wip/* 分支可实验, 不强制绿
+
+on:
+  push:
+    branches: [game]
+    tags: ["live-mountain-v*"]
+  pull_request:
+    branches: [game]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 山锁检查
+        run: ./tools/check-mountain-lock.sh
