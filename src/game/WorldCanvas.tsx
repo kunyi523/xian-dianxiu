@@ -10,7 +10,6 @@ import {
   drawDistantPeaks,
   drawForeground,
   drawPeaks,
-  drawProceduralBuilding,
   drawSiteFx,
   drawSky,
   drawSwordRider,
@@ -203,23 +202,13 @@ export function WorldCanvas() {
 
     const mountain = new Image();
     mountain.crossOrigin = "anonymous";
-    // qg1:清新青山底图(青绿山水,无文字);世界坐标改用屏幕坐标,背景只做装饰
-    mountain.src = assetUrl("bg/bg_panorama.jpg?v=7");
+    // 母卷:地理母卷 master_scroll_v8 定稿超分(4896×2048),8 栋完成态画死在卷里;背景即内容本身
+    mountain.src = assetUrl("bg/bg_panorama.jpg?v=8");
     let mountainOk = false;
-    // 融合块:建筑已画死进背景块,随背景同一套变换叠上去(真融合路线)
-    // 区域为背景像素坐标(4500×1932),块与块互不重叠;tiers=该建筑融合块档数
-    // 背景融合片区:每块都是从背景大图上精确裁下的区域,建筑已画进该区域山水里;
-    // 坐标为背景像素坐标(4500×1932),绘制时与背景同一套变换,边缘羽化,无拼贴感
-    const FUSED_BLOCKS = [
-      { id: "tower", sx: 2694, sy: 0, sw: 738, sh: 574, tiers: 4 },
-      { id: "mirror", sx: 3166, sy: 242, sw: 738, sh: 738, tiers: 4 },
-      { id: "mine", sx: 3172, sy: 904, sw: 738, sh: 738, tiers: 4 },
-      { id: "sword", sx: 659, sy: 435, sw: 738, sh: 738, tiers: 4 },
-      { id: "hall", sx: 2263, sy: 348, sw: 738, sh: 738, tiers: 2 },
-      { id: "alchemy", sx: 1035, sy: 303, sw: 738, sh: 738, tiers: 4 },
-      { id: "array", sx: 3028, sy: 0, sw: 738, sh: 605, tiers: 4 },
-      { id: "house", sx: 2195, sy: 1072, sw: 738, sh: 738, tiers: 4 },
-    ];
+    // 母卷版(2026-09-25):地理母卷已定稿,8 栋完成态全部画死在母卷里,不再叠任何单栋裁图贴纸。
+    // FUSED_BLOCKS 清空:机制保留(低阶补丁以后按母卷坐标另出),当前无叠加块。
+    // 区域为背景像素坐标(4896×2048),块与块互不重叠;tiers=该建筑融合块档数
+    const FUSED_BLOCKS: { id: string; sx: number; sy: number; sw: number; sh: number; tiers: number }[] = [];
     const FUSED_IDS = new Set(FUSED_BLOCKS.map((b) => b.id));
     const fusedImgs = new Map<string, HTMLImageElement>();
     for (const b of FUSED_BLOCKS) {
@@ -799,7 +788,7 @@ export function WorldCanvas() {
     const ro = new ResizeObserver(resize);
     if (canvas.parentElement) ro.observe(canvas.parentElement);
 
-    const paintBuildings = (band: 0 | 1 | 2, st: ReturnType<typeof useGame.getState>, painted: boolean) => {
+    const paintBuildings = (band: 0 | 1 | 2, st: ReturnType<typeof useGame.getState>, _painted: boolean) => {
       const w = cssW;
       const h = cssH;
       for (const def of BAND_CACHE[band]) {
@@ -815,21 +804,13 @@ export function WorldCanvas() {
         const p = slotXY(slot.nx, slot.ny, w, h, blit);
         const s = blit ? blit.dw * slot.hw : 56;
         if (lv <= 0) {
-          // 未解锁:融合点已画t0废墟补丁,不再画虚印地基;非融合点才画虚印
-          if (FUSED_IDS.has(def.id)) continue;
+          // 母卷版:建筑完成态已画死在母卷里;未解锁画淡色虚印地基作"未建"标记
           drawSiteFx(ctx, p.x, p.y, 0, time, def.id, s, false, band);
-          continue;
+        } else {
+          // 母卷版:已解锁建筑不再叠任何贴纸(sprite/融合块/程序化),只留升级特效
+          const fl = buildingFlash[def.id] ?? 0;
+          if (fl > 0) drawUpgradeBurst(ctx, p.x, p.y, Math.min(1, fl), !!buildingTierUp[def.id]);
         }
-        const fl = buildingFlash[def.id] ?? 0;
-        if (fl > 0) drawUpgradeBurst(ctx, p.x, p.y, Math.min(1, fl), !!buildingTierUp[def.id]);
-        ctx.save();
-        if (fl > 0) ctx.globalAlpha = 0.88 + Math.min(1, fl) * 0.12;
-        // 有融合块的建筑已画死在块里,不再画 sprite(真融合路线)
-        if (painted) {
-          if (!(lv > 0 && FUSED_IDS.has(def.id)))
-            drawSiteFx(ctx, p.x, p.y, lv, time, def.id, s, false, band);
-        } else drawProceduralBuilding(ctx, def, p.x, p.y, lv, time);
-        ctx.restore();
         drawBuildingLabel(ctx, def.id, def.name, p.x, p.y, time);
       }
     };

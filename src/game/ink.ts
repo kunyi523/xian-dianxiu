@@ -216,7 +216,7 @@ export const SHORT_NAME: Record<string, string> = {
 };
 
 /** 世界宽度 = 屏幕宽 × WORLD_K,可左右滑动;中央(劫云/主建筑/瀑布)为开屏镜头 */
-export const WORLD_K = 3.6;
+export const WORLD_K = 4.4;
 
 export type Peak = {
   id: string;
@@ -229,16 +229,17 @@ export type Peak = {
 };
 
 export const PEAKS: Peak[] = [
-  // 2026-09-25 整图版:建筑直接画进背景,PEAKS 只定标签/热区/虚印位;nx 按 WORLD_K=3.6 折算。
+  // 2026-09-25 母卷版:地理母卷 master_scroll_v8(4896×2048)定稿;nx/ny 为底图像素分数,
+  // 8 栋座位由母卷实测定位;PEAKS 只定印章/名号/热区/虚印位,不再叠任何建筑贴纸。
   { id: "main", nx: 0.5, ny: 0.18, hw: 0.16, hh: 0.2, band: 0, z: 0 },
-  { id: "tower", nx: 0.753, ny: 0.24, hw: 0.045, hh: 0.045, band: 0, z: 1 },
-  { id: "mirror", nx: 0.90, ny: 0.45, hw: 0.045, hh: 0.045, band: 0, z: 2 },
-  { id: "alchemy", nx: 0.237, ny: 0.482, hw: 0.045, hh: 0.045, band: 1, z: 0 },
-  { id: "array", nx: 0.857, ny: 0.256, hw: 0.045, hh: 0.045, band: 0, z: 1 },
-  { id: "mine", nx: 0.902, ny: 0.793, hw: 0.045, hh: 0.045, band: 2, z: 0 },
-  { id: "house", nx: 0.598, ny: 0.88, hw: 0.045, hh: 0.045, band: 2, z: 0 },
-  { id: "hall", nx: 0.619, ny: 0.505, hw: 0.055, hh: 0.055, band: 1, z: 1 },
-  { id: "sword", nx: 0.12, ny: 0.55, hw: 0.045, hh: 0.045, band: 1, z: 2 },
+  { id: "tower", nx: 0.859, ny: 0.168, hw: 0.045, hh: 0.045, band: 0, z: 1 },
+  { id: "mirror", nx: 0.83, ny: 0.577, hw: 0.045, hh: 0.045, band: 0, z: 2 },
+  { id: "alchemy", nx: 0.311, ny: 0.558, hw: 0.045, hh: 0.045, band: 1, z: 0 },
+  { id: "array", nx: 0.885, ny: 0.345, hw: 0.045, hh: 0.045, band: 0, z: 1 },
+  { id: "mine", nx: 0.774, ny: 0.793, hw: 0.045, hh: 0.045, band: 2, z: 0 },
+  { id: "house", nx: 0.303, ny: 0.828, hw: 0.045, hh: 0.045, band: 2, z: 0 },
+  { id: "hall", nx: 0.547, ny: 0.541, hw: 0.055, hh: 0.055, band: 1, z: 1 },
+  { id: "sword", nx: 0.626, ny: 0.893, hw: 0.045, hh: 0.045, band: 1, z: 2 },
 ];
 
 export const BUILDING_SLOTS: Record<string, { nx: number; ny: number; z: number; band: 0 | 1 | 2; hw: number; hh: number }> =
@@ -246,7 +247,7 @@ export const BUILDING_SLOTS: Record<string, { nx: number; ny: number; z: number;
     PEAKS.filter((p) => p.id !== "main").map((p) => [p.id, { nx: p.nx, ny: p.ny, z: p.z, band: p.band, hw: p.hw, hh: p.hh }]),
   );
 
-/** 拜山多径：世界坐标(nx 0-1 铺满 worldW);WORLD_K=3.6 整图版 */
+/** 拜山多径：世界坐标(nx 0-1 铺满 worldW);WORLD_K=4.4 母卷版 */
 export const MOUNTAIN_PATHS: { nx: number; ny: number }[][] = [
   // 0 · 左山环 — 丹鼎阁 0.237/0.482 → 香案 0.619/0.505 → 听松庐 0.598/0.88
   [
